@@ -45,6 +45,19 @@ function hazard(scene, key, color) {
   add(scene, key, c);
 }
 
+function questionTile(scene) {
+  const [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, TILE, '#d8892c');
+  outline(ctx, 0, 0, TILE, TILE, '#ffd66e', '#7a3c08');
+  rect(ctx, 6, 3, 5, 2, '#fff5a0');
+  rect(ctx, 10, 5, 2, 3, '#fff5a0');
+  rect(ctx, 7, 8, 4, 2, '#fff5a0');
+  rect(ctx, 7, 12, 3, 2, '#fff5a0');
+  rect(ctx, 5, 3, 1, 1, '#7a3c08');
+  rect(ctx, 11, 9, 1, 1, '#7a3c08');
+  add(scene, 'tile-question', c);
+}
+
 function coin(scene) {
   const [c, ctx] = canvas(10, 14);
   rect(ctx, 3, 1, 4, 12, '#ffb51f');
@@ -121,7 +134,7 @@ export function generateTextures(scene) {
   tile(scene, 'tile-ground', '#7c5a28', '#b98b3c', '#352010', '#5ea63e');
   tile(scene, 'tile-block', '#8b5a2b', '#d69249', '#43230d');
   tile(scene, 'tile-brick', '#a04d22', '#e29b58', '#4a1f0c');
-  tile(scene, 'tile-question', '#d8892c', '#ffd66e', '#7a3c08');
+  questionTile(scene);
   tile(scene, 'tile-used', '#796552', '#a89986', '#33291f');
   tile(scene, 'tile-platform', '#91693a', '#d3a05a', '#3d2810');
   tile(scene, 'tile-pipe', '#237a34', '#62d66b', '#0d3518');

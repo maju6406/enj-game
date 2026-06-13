@@ -27,5 +27,5 @@ const config = {
   scene: [BootScene, TitleScene, SelectScene, LevelScene, GameOverScene, WinScene],
 };
 
-// eslint-disable-next-line no-new
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+window.cryptidGame = game;

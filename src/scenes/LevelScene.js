@@ -50,7 +50,7 @@ export class LevelScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys({ space: Phaser.Input.Keyboard.KeyCodes.SPACE, enter: Phaser.Input.Keyboard.KeyCodes.ENTER });
 
-    this.physics.add.collider(this.player.sprite, this.solids, () => this.handleBlockBump());
+    this.physics.add.collider(this.player.sprite, this.solids, (_player, block) => this.handleBlockBump(block));
     this.physics.add.collider(this.enemies, this.solids);
     this.physics.add.collider(this.items, this.solids);
     this.physics.add.overlap(this.player.sprite, this.coins, (_, coin) => this.collectRelic(coin));
@@ -97,22 +97,35 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  handleBlockBump() {
+  handleBlockBump(block) {
     const body = this.player.sprite.body;
-    if (!body.blocked.up) return;
-    const tx = Math.floor(this.player.sprite.x / TILE);
-    const ty = Math.floor((this.player.sprite.y - this.player.sprite.displayHeight - 1) / TILE);
-    for (let x = tx - 1; x <= tx + 1; x++) {
-      const block = this.blockSprites.get(`${x},${ty}`);
-      const ch = block?.getData('tile')?.ch;
-      if (!block || !['?', 'U', 'B'].includes(ch)) continue;
-      if (ch === 'B' && !this.player.big) return;
-      if (ch === 'B') { block.destroy(); this.blockSprites.delete(`${x},${ty}`); return; }
-      block.setTexture('tile-used'); block.setData('tile', { x, y: ty, ch: 'D' });
-      if (ch === '?') { sfx('coin'); this.addRelic(50); }
-      if (ch === 'U') { sfx('power'); this.items.create(x * TILE + 8, ty * TILE - 8, 'journal'); }
+    if (!block?.getData || !block.body) return;
+    const hitFromBelow = body.velocity.y <= 25
+      && body.top >= block.body.bottom - 8
+      && body.center.x >= block.body.left - 8
+      && body.center.x <= block.body.right + 8;
+    if (!hitFromBelow) return;
+    const tile = block.getData('tile');
+    const ch = tile?.ch;
+    if (!['?', 'U', 'B'].includes(ch)) return;
+    if (ch === 'B' && !this.player.big) return;
+    if (ch === 'B') {
+      block.destroy();
+      this.blockSprites.delete(`${tile.x},${tile.y}`);
+      sfx('stomp');
       return;
     }
+    this.tweens.add({
+      targets: block,
+      y: block.y - 3,
+      yoyo: true,
+      duration: 55,
+      ease: 'Quad.easeOut',
+    });
+    block.setTexture('tile-used');
+    block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
+    if (ch === '?') { sfx('coin'); this.addRelic(50); }
+    if (ch === 'U') { sfx('power'); this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'); }
   }
 
   collectRelic(coin) { coin.destroy(); sfx('coin'); this.addRelic(50); }

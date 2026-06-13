@@ -14,17 +14,24 @@ export class Player {
       .setOrigin(0.5, 1)
       .setDisplaySize(18, 30)
       .setDepth(10);
-    this.sprite.body.setSize(12, 20);
-    this.sprite.body.setOffset((this.sprite.width - 12) / 2, this.sprite.height - 20);
+    this.setBody(12, 20);
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
+  }
+
+  setBody(displayW, displayH) {
+    const scaleX = Math.abs(this.sprite.scaleX) || 1;
+    const scaleY = Math.abs(this.sprite.scaleY) || 1;
+    const bodyW = displayW / scaleX;
+    const bodyH = displayH / scaleY;
+    this.sprite.body.setSize(bodyW, bodyH);
+    this.sprite.body.setOffset((this.sprite.width - bodyW) / 2, this.sprite.height - bodyH);
   }
 
   setBig(big) {
     if (this.big === big) return;
     this.big = big;
     this.sprite.setDisplaySize(big ? 26 : 18, big ? 44 : 30);
-    this.sprite.body.setSize(big ? 14 : 12, big ? 30 : 20);
-    this.sprite.body.setOffset((this.sprite.width - this.sprite.body.width) / 2, this.sprite.height - this.sprite.body.height);
+    this.setBody(big ? 14 : 12, big ? 30 : 20);
   }
 
   grow() { this.setBig(true); }

@@ -29,3 +29,31 @@ const config = {
 
 const game = new Phaser.Game(config);
 window.cryptidGame = game;
+
+const canvas = document.getElementById('game');
+const gameWrap = document.getElementById('game-wrap');
+const fullscreenButton = document.getElementById('fullscreen-button');
+
+async function toggleFullscreen() {
+  if (document.fullscreenElement) {
+    await document.exitFullscreen();
+    return;
+  }
+  await (gameWrap || canvas).requestFullscreen();
+}
+
+fullscreenButton?.addEventListener('click', () => {
+  toggleFullscreen().catch((error) => {
+    console.warn('Fullscreen request failed:', error);
+  });
+});
+
+window.addEventListener('keydown', (event) => {
+  if (event.code !== 'KeyF' || event.repeat) return;
+  const activeTag = document.activeElement?.tagName;
+  if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'BUTTON') return;
+  event.preventDefault();
+  toggleFullscreen().catch((error) => {
+    console.warn('Fullscreen request failed:', error);
+  });
+});

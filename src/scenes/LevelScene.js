@@ -27,6 +27,8 @@ export class LevelScene extends Phaser.Scene {
     this.lives = data.lives ?? START_LIVES;
     this.relics = data.relics || 0;
     this.score = data.score || 0;
+    this.dying = false;
+    this.clearing = false;
   }
 
   create() {
@@ -289,7 +291,13 @@ export class LevelScene extends Phaser.Scene {
   update(time) {
     if (!this.player || this.dying || this.clearing) return;
     this.player.update(this.cursors, this.keys);
-    this.enemies.children.each((e) => updateEnemy(this, e, time));
+    this.enemies.children.each((e) => {
+      if (e.y > VIEW_H + 96) {
+        e.destroy();
+        return;
+      }
+      updateEnemy(this, e, time);
+    });
     this.updateHud();
   }
 }

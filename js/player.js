@@ -7,11 +7,14 @@
     return {
       who, x: 0, y: 0, w: 12, h: 20, vx: 0, vy: 0,
       facing: 1, onGround: false, big: false, invuln: 0,
-      jumpHeld: false, state: 'idle', animT: 0, alive: true,
+      jumpHeld: false, jumpBuffer: 0, coyote: 0, state: 'idle', animT: 0, alive: true,
     };
   }
 
-  function place(p, x, y) { p.x = x; p.y = y; p.vx = 0; p.vy = 0; }
+  function place(p, x, y) {
+    p.x = x; p.y = y; p.vx = 0; p.vy = 0;
+    p.onGround = false; p.jumpHeld = false; p.jumpBuffer = 0; p.coyote = 0;
+  }
 
   function grow(p) {
     if (p.big) return;
@@ -42,12 +45,31 @@
     p.vx = Math.max(-P.MAX_RUN, Math.min(P.MAX_RUN, p.vx));
 
     // ---- jump ----
-    if (p.onGround && Input.pressed('jump')) {
-      p.vy = P.JUMP_VEL; p.onGround = false; p.jumpHeld = true; Audio2.jump();
+    if (p.onGround) p.coyote = P.COYOTE_FRAMES;
+    else if (p.coyote > 0) p.coyote--;
+
+    if (Input.pressed('jump')) p.jumpBuffer = P.JUMP_BUFFER_FRAMES;
+    else if (p.jumpBuffer > 0) p.jumpBuffer--;
+
+    const jumpHeldNow = Input.held('jump');
+    if (p.jumpBuffer > 0 && (p.onGround || p.coyote > 0)) {
+      p.vy = P.JUMP_VEL;
+      p.onGround = false;
+      p.coyote = 0;
+      p.jumpBuffer = 0;
+      p.jumpHeld = jumpHeldNow;
+      Audio2.jump();
+    } else if (p.jumpHeld && !jumpHeldNow && p.vy < 0) {
+      p.vy *= P.JUMP_CUT_MULT;
+      p.jumpHeld = false;
+    } else if (!jumpHeldNow) {
+      p.jumpHeld = false;
     }
-    if (!Input.held('jump')) p.jumpHeld = false;
+
     const rising = p.vy < 0;
-    const grav = (p.jumpHeld && rising) ? P.JUMP_HOLD_GRAV : P.GRAVITY;
+    const grav = (p.jumpHeld && rising)
+      ? P.JUMP_HOLD_GRAV
+      : (!jumpHeldNow && rising ? P.JUMP_RELEASE_GRAV : P.GRAVITY);
     p.vy = Math.min(p.vy + grav, P.MAX_FALL);
 
     // ---- move + collide ----

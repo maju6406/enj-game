@@ -23,13 +23,17 @@ export class LevelScene extends Phaser.Scene {
 
   init(data) {
     this.who = data.who || 'jack';
-    this.levelIndex = data.levelIndex || 0;
+    this.levelIndex = Phaser.Math.Clamp(data.levelIndex || 0, 0, LEVELS.length - 1);
     this.lives = data.lives ?? START_LIVES;
     this.relics = data.relics || 0;
     this.score = data.score || 0;
   }
 
   create() {
+    if (!LEVELS[this.levelIndex]) {
+      this.scene.start('Win', { who: this.who, score: this.score });
+      return;
+    }
     this.level = LEVELS[this.levelIndex];
     this.cameras.main.setBackgroundColor(this.bgColor());
     this.physics.world.gravity.y = PHYSICS.gravity;
@@ -57,6 +61,7 @@ export class LevelScene extends Phaser.Scene {
     this.physics.add.overlap(this.player.sprite, this.items, (_, item) => this.collectItem(item));
     this.physics.add.overlap(this.player.sprite, this.hazards, () => this.killPlayer());
     this.physics.add.overlap(this.player.sprite, this.enemies, (_, enemy) => this.touchEnemy(enemy));
+    this.physics.add.overlap(this.enemies, this.enemies, (a, b) => this.enemyTouchesEnemy(a, b));
 
     if (this.level.flagX != null) {
       this.flag = this.add.rectangle(this.level.flagX * TILE, 96, 4, 112, 0xffffff).setOrigin(0, 0).setDepth(4);
@@ -124,12 +129,15 @@ export class LevelScene extends Phaser.Scene {
     });
     block.setTexture('tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
-    if (ch === '?') { sfx('coin'); this.addRelic(50); }
+    if (ch === '?') { sfx('coin'); this.addRelic(50); this.scorePop(block.x, block.y - 10, '+50'); }
     if (ch === 'U') { sfx('power'); this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'); }
   }
 
-  collectRelic(coin) { coin.destroy(); sfx('coin'); this.addRelic(50); }
-  collectItem(item) { item.destroy(); this.player.grow(); sfx('power'); this.score += 1000; this.updateHud(); }
+  collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, '+50'); coin.destroy(); sfx('coin'); this.addRelic(50); }
+  collectItem(item) {
+    this.scorePop(item.x, item.y - 10, '1000');
+    item.destroy(); this.player.grow(); sfx('power'); this.score += 1000; this.updateHud();
+  }
   addRelic(points = 50) {
     this.relics += 1; this.score += points;
     if (this.relics >= 100) { this.relics -= 100; this.lives += 1; }
@@ -144,6 +152,7 @@ export class LevelScene extends Phaser.Scene {
       this.player.bounce(this.cursors.up.isDown || this.keys.space.isDown);
       sfx(enemy.kind === 'boss' ? 'hurt' : 'stomp');
       this.score += enemy.kind === 'boss' ? 0 : 100;
+      if (enemy.kind !== 'boss') this.scorePop(enemy.x, enemy.y - enemy.displayHeight, '100');
       this.updateHud();
       return;
     }
@@ -153,6 +162,24 @@ export class LevelScene extends Phaser.Scene {
       return;
     }
     if (this.player.damage(enemy.x)) this.killPlayer();
+  }
+
+  enemyTouchesEnemy(a, b) {
+    if (!a.active || !b.active || a.dead || b.dead || a === b) return;
+    const shell = this.isSlidingShell(a) ? a : this.isSlidingShell(b) ? b : null;
+    const target = shell === a ? b : shell === b ? a : null;
+    if (!shell || !target || target.kind === 'boss') return;
+    target.dead = true;
+    target.disableBody(true, true);
+    this.score += 100;
+    this.scorePop(target.x, target.y - target.displayHeight, '100');
+    this.addBurst(target.x, target.y - target.displayHeight / 2, 0x9adf4a);
+    sfx('stomp');
+    this.updateHud();
+  }
+
+  isSlidingShell(enemy) {
+    return enemy.kind === 'chupacabra' && enemy.shell && Math.abs(enemy.body.velocity.x) >= 80;
   }
 
   killPlayer() {
@@ -174,9 +201,11 @@ export class LevelScene extends Phaser.Scene {
     sfx('flag');
     this.score += this.timeLeft * 10;
     this.updateHud();
-    this.time.delayedCall(900, () => this.scene.restart({
-      who: this.who, levelIndex: this.levelIndex + 1, lives: this.lives, relics: this.relics, score: this.score,
-    }));
+    this.time.delayedCall(900, () => {
+      const next = this.levelIndex + 1;
+      if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
+      else this.scene.restart({ who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
+    });
   }
 
   winGame() {
@@ -203,6 +232,39 @@ export class LevelScene extends Phaser.Scene {
     this.hud.relics.setText(`RELIC ${String(this.relics).padStart(2, '0')}`);
     this.hud.time.setText(`TIME ${Math.max(0, this.timeLeft | 0)}`);
     this.hud.hearts.forEach((h, i) => h.setVisible(i < this.lives));
+  }
+
+  scorePop(x, y, value) {
+    const pop = this.add.text(x, y, value, {
+      fontFamily: 'Courier New, monospace',
+      fontSize: '9px',
+      color: '#ffffff',
+      stroke: '#101020',
+      strokeThickness: 2,
+    }).setOrigin(0.5).setDepth(40).setResolution(1);
+    this.tweens.add({
+      targets: pop,
+      y: y - 16,
+      alpha: 0,
+      duration: 600,
+      ease: 'Quad.easeOut',
+      onComplete: () => pop.destroy(),
+    });
+  }
+
+  addBurst(x, y, color) {
+    for (let i = 0; i < 7; i++) {
+      const dot = this.add.rectangle(x, y, 2, 2, color).setDepth(35);
+      this.tweens.add({
+        targets: dot,
+        x: x + Phaser.Math.Between(-16, 16),
+        y: y + Phaser.Math.Between(-16, 8),
+        alpha: 0,
+        duration: 360,
+        ease: 'Quad.easeOut',
+        onComplete: () => dot.destroy(),
+      });
+    }
   }
 
   update(time) {

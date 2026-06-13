@@ -17,15 +17,15 @@ export const HAZARD = new Set(['^', 'v']);
 
 export const PHYSICS = {
   gravity: 760,
-  runAccel: 38,
-  friction: 34,
-  maxRun: 196,
+  runAccel: 30,
+  friction: 30,
+  maxRun: 142,
   jumpVelocity: -300,
   jumpCutMultiplier: 0.5,
   coyoteMs: 100,
   jumpBufferMs: 100,
   stompBounce: -250,
   stompBounceHeld: -285,
-  hurtKnockX: 150,
+  hurtKnockX: 120,
   hurtKnockY: -210,
 };

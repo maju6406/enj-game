@@ -14,7 +14,7 @@ export class Player {
       .setOrigin(0.5, 1)
       .setDepth(10);
     this.setHeroDisplay(false);
-    this.setBody(14, 38);
+    this.setBody(13, 25);
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
   }
 
@@ -41,7 +41,7 @@ export class Player {
     if (this.big === big) return;
     this.big = big;
     this.setHeroDisplay(big);
-    this.setBody(big ? 18 : 14, big ? 52 : 38);
+    this.setBody(big ? 17 : 13, big ? 34 : 25);
   }
 
   grow() { this.setBig(true); }

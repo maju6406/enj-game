@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { HAZARD, PHYSICS, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
+import { GAMEPLAY_ZOOM, HAZARD, PHYSICS, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
 import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
@@ -36,6 +36,7 @@ export class LevelScene extends Phaser.Scene {
     }
     this.level = LEVELS[this.levelIndex];
     this.cameras.main.setBackgroundColor(this.bgColor());
+    this.cameras.main.setZoom(GAMEPLAY_ZOOM);
     this.physics.world.gravity.y = PHYSICS.gravity;
     this.physics.world.setBounds(0, 0, this.level.width * TILE, VIEW_H);
 
@@ -71,6 +72,8 @@ export class LevelScene extends Phaser.Scene {
     }
 
     for (const def of this.level.enemies) spawnEnemy(this, def);
+    this.uiCamera = this.cameras.add(0, 0, VIEW_W, VIEW_H).setScroll(0, 0).setZoom(1);
+    this.uiCamera.ignore(this.children.list);
     this.createHud();
     this.timeLeft = this.level.time;
     this.timerEvent = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
@@ -130,7 +133,10 @@ export class LevelScene extends Phaser.Scene {
     block.setTexture('tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
     if (ch === '?') { sfx('coin'); this.addRelic(50); this.scorePop(block.x, block.y - 10, '+50'); }
-    if (ch === 'U') { sfx('power'); this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'); }
+    if (ch === 'U') {
+      sfx('power');
+      this.ignoreUi(this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'));
+    }
   }
 
   collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, '+50'); coin.destroy(); sfx('coin'); this.addRelic(50); }
@@ -223,7 +229,20 @@ export class LevelScene extends Phaser.Scene {
       name: label(this, this.level.name, 10, 24, 9),
     };
     for (let i = 0; i < 3; i++) this.hud.hearts.push(this.add.image(70 + i * 12, 15, 'heart').setScrollFactor(0).setDepth(50));
+    this.cameras.main.ignore([
+      ...this.hud.hearts,
+      this.hud.score,
+      this.hud.relics,
+      this.hud.world,
+      this.hud.time,
+      this.hud.name,
+    ]);
     this.updateHud();
+  }
+
+  ignoreUi(target) {
+    this.uiCamera?.ignore(target);
+    return target;
   }
 
   updateHud() {
@@ -235,13 +254,13 @@ export class LevelScene extends Phaser.Scene {
   }
 
   scorePop(x, y, value) {
-    const pop = this.add.text(x, y, value, {
+    const pop = this.ignoreUi(this.add.text(x, y, value, {
       fontFamily: 'Courier New, monospace',
       fontSize: '9px',
       color: '#ffffff',
       stroke: '#101020',
       strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(40).setResolution(1);
+    }).setOrigin(0.5).setDepth(40).setResolution(1));
     this.tweens.add({
       targets: pop,
       y: y - 16,
@@ -254,7 +273,7 @@ export class LevelScene extends Phaser.Scene {
 
   addBurst(x, y, color) {
     for (let i = 0; i < 7; i++) {
-      const dot = this.add.rectangle(x, y, 2, 2, color).setDepth(35);
+      const dot = this.ignoreUi(this.add.rectangle(x, y, 2, 2, color).setDepth(35));
       this.tweens.add({
         targets: dot,
         x: x + Phaser.Math.Between(-16, 16),

@@ -3,10 +3,11 @@ export const VIEW_W = 384;
 export const VIEW_H = 240;
 export const GRID_H = 15;
 export const START_LIVES = 3;
+export const GAMEPLAY_ZOOM = 1.5;
 export const HERO_DISPLAY = {
   title: 58,
-  gameplay: 58,
-  powered: 74,
+  gameplay: 39,
+  powered: 50,
   select: 92,
   win: 74,
 };

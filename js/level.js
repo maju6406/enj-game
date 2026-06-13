@@ -67,34 +67,36 @@
     }
 
     draw(ctx, camX, t) {
-      Sprites.drawBackground(ctx, this.theme, camX, t);
-      const x0 = Math.max(0, (camX / TILE | 0) - 1);
+      const cam = Math.round(camX);
+      Sprites.drawBackground(ctx, this.theme, cam, t);
+      const x0 = Math.max(0, (cam / TILE | 0) - 1);
       const x1 = Math.min(this.width - 1, x0 + (VIEW_W / TILE) + 2);
       for (let ty = 0; ty < this.height; ty++) {
         const row = this.tiles[ty];
         for (let tx = x0; tx <= x1; tx++) {
           const ch = row[tx];
-          if (ch !== ' ') Sprites.drawTile(ctx, ch, tx * TILE - camX, ty * TILE, this.theme, t);
+          if (ch !== ' ') Sprites.drawTile(ctx, ch, tx * TILE - cam, ty * TILE, this.theme, t);
         }
       }
       if (this.flagX != null)
-        Sprites.drawFlag(ctx, this.flagX * TILE - camX, this.flagBaseY, this.flagHeight, t);
+        Sprites.drawFlag(ctx, this.flagX * TILE - cam, this.flagBaseY, this.flagHeight, t);
     }
 
     drawItems(ctx, camX, t) {
+      const cam = Math.round(camX);
       for (const it of this.items)
-        if (it.type === 'journal') Sprites.drawJournal(ctx, it.x - camX, it.y, t);
+        if (it.type === 'journal') Sprites.drawJournal(ctx, Math.round(it.x) - cam, Math.round(it.y), t);
     }
 
     drawParticles(ctx, camX) {
       for (const pt of this.particles) {
         if (pt.text) {
           const a = Math.min(1, pt.life / 30);
-          Sprites.drawText(ctx, pt.text, Math.round(pt.x - camX), Math.round(pt.y), `rgba(255,255,255,${a})`, 1);
+          Sprites.drawText(ctx, pt.text, Math.round(pt.x) - Math.round(camX), Math.round(pt.y), `rgba(255,255,255,${a})`, 1);
         } else {
           ctx.globalAlpha = Math.min(1, pt.life / 20);
           ctx.fillStyle = pt.color;
-          ctx.fillRect(Math.round(pt.x - camX), Math.round(pt.y), pt.size, pt.size);
+          ctx.fillRect(Math.round(pt.x) - Math.round(camX), Math.round(pt.y), pt.size, pt.size);
           ctx.globalAlpha = 1;
         }
       }

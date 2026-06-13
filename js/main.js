@@ -310,7 +310,7 @@
       lvl.enemies = lvl.enemies.filter((e) => !e.remove);
 
       const maxCam = Math.max(0, lvl.pixelWidth - VIEW_W);
-      this.camX = Math.max(0, Math.min(maxCam, p.x + p.w / 2 - VIEW_W / 2));
+      this.camX = Math.round(Math.max(0, Math.min(maxCam, p.x + p.w / 2 - VIEW_W / 2)));
     },
 
     resolveEnemies() {

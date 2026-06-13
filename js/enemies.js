@@ -78,7 +78,8 @@
   }
 
   function draw(ctx, e, camX, t) {
-    const X = Math.round(e.x - camX), Y = Math.round(e.y);
+    const cam = Math.round(camX);
+    const X = Math.round(e.x) - cam, Y = Math.round(e.y);
     if (e.type === 'grunt') Sprites.drawGrunt(ctx, X, Y, t, e.dead ? 'squished' : null);
     else if (e.type === 'chupacabra') Sprites.drawChupacabra(ctx, X, Y, t, e.dead ? 'shell' : e.state, e.facing);
     else if (e.type === 'mothman') Sprites.drawMothman(ctx, X, Y, e.t);

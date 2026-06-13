@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Cryptid Quest — Look &amp; Feel Preview</title>
+<style>
+  html,body{margin:0;height:100%;background:#0b0b16;color:#cfcfe6;
+    font-family:"Courier New",monospace;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:12px;overflow:hidden;}
+  h1{font-size:15px;letter-spacing:2px;margin:0;color:#ffd34d;text-transform:uppercase;}
+  .sub{font-size:12px;opacity:.7;margin:-4px 0 2px;}
+  canvas{width:768px;height:672px;image-rendering:pixelated;
+    border:4px solid #2a2a44;border-radius:6px;
+    box-shadow:0 0 0 4px #11111c,0 18px 40px rgba(0,0,0,.6);background:#5c94fc;}
+  .tag{font-size:11px;opacity:.55;}
+</style>
+</head>
+<body>
+  <h1>Cryptid Quest — Jack &amp; Evee</h1>
+  <div class="sub">High-fidelity look &amp; feel mockup (not yet playable)</div>
+  <canvas id="c" width="256" height="224"></canvas>
+  <div class="tag">16-bit SNES-style • original cryptid-themed art</div>
+<script>
+const cv=document.getElementById('c'),x=cv.getContext('2d');
+x.imageSmoothingEnabled=false;
+const T=16;
+function p(c,X,Y,w,h){x.fillStyle=c;x.fillRect(X|0,Y|0,w|0,h|0);}
+
+/* ============================================================
+   5x7 BITMAP FONT (reused later by the real HUD)
+============================================================ */
+const FONT={
+ A:[" ### ","#   #","#   #","#####","#   #","#   #","#   #"],
+ B:["#### ","#   #","#### ","#   #","#   #","#   #","#### "],
+ C:[" ####","#    ","#    ","#    ","#    ","#    "," ####"],
+ D:["#### ","#   #","#   #","#   #","#   #","#   #","#### "],
+ E:["#####","#    ","#### ","#    ","#    ","#    ","#####"],
+ F:["#####","#    ","#### ","#    ","#    ","#    ","#    "],
+ G:[" ####","#    ","#    ","#  ##","#   #","#   #"," ####"],
+ H:["#   #","#   #","#   #","#####","#   #","#   #","#   #"],
+ I:["#####","  #  ","  #  ","  #  ","  #  ","  #  ","#####"],
+ J:["  ###","   # ","   # ","   # ","#  # ","#  # "," ##  "],
+ K:["#   #","#  # ","# #  ","##   ","# #  ","#  # ","#   #"],
+ L:["#    ","#    ","#    ","#    ","#    ","#    ","#####"],
+ M:["#   #","## ##","# # #","# # #","#   #","#   #","#   #"],
+ N:["#   #","##  #","# # #","# # #","#  ##","#   #","#   #"],
+ O:[" ### ","#   #","#   #","#   #","#   #","#   #"," ### "],
+ P:["#### ","#   #","#   #","#### ","#    ","#    ","#    "],
+ R:["#### ","#   #","#   #","#### ","# #  ","#  # ","#   #"],
+ S:[" ####","#    ","#    "," ### ","    #","    #","#### "],
+ T:["#####","  #  ","  #  ","  #  ","  #  ","  #  ","  #  "],
+ U:["#   #","#   #","#   #","#   #","#   #","#   #"," ### "],
+ V:["#   #","#   #","#   #","#   #","#   #"," # # ","  #  "],
+ W:["#   #","#   #","#   #","# # #","# # #","## ##","#   #"],
+ Y:["#   #","#   #"," # # ","  #  ","  #  ","  #  ","  #  "],
+ "0":[" ### ","#   #","#  ##","# # #","##  #","#   #"," ### "],
+ "1":["  #  "," ##  ","  #  ","  #  ","  #  ","  #  "," ### "],
+ "2":[" ### ","#   #","    #","   # ","  #  "," #   ","#####"],
+ "3":["#####","   # ","  #  ","   # ","    #","#   #"," ### "],
+ "4":["   # ","  ## "," # # ","#  # ","#####","   # ","   # "],
+ "5":["#####","#    ","#### ","    #","    #","#   #"," ### "],
+ "6":["  ## "," #   ","#    ","#### ","#   #","#   #"," ### "],
+ "7":["#####","    #","   # ","  #  "," #   "," #   "," #   "],
+ "8":[" ### ","#   #","#   #"," ### ","#   #","#   #"," ### "],
+ "9":[" ### ","#   #","#   #"," ####","    #","   # "," ##  "],
+ "x":["     ","     ","#   #"," # # ","  #  "," # # ","#   #"],
+ "-":["     ","     ","     ","#####","     ","     ","     "],
+ ".":["     ","     ","     ","     ","     "," ##  "," ##  "],
+ " ":["     ","     ","     ","     ","     ","     ","     "]
+};
+function text(str,X,Y,col,sc){
+  sc=sc||1;str=(str+'').toUpperCase();
+  for(let i=0;i<str.length;i++){
+    const g=FONT[str[i]]||FONT[' '];
+    for(let r=0;r<7;r++)for(let cidx=0;cidx<5;cidx++)
+      if(g[r][cidx]==='#')p(col,X+i*6*sc+cidx*sc,Y+r*sc,sc,sc);
+  }
+}
+function textShadow(str,X,Y,col){text(str,X+1,Y+1,'rgba(0,0,0,.6)');text(str,X,Y,col);}
+
+/* ============================================================
+   BACKGROUND
+============================================================ */
+function sky(){
+  const g=x.createLinearGradient(0,0,0,224);
+  g.addColorStop(0,'#4a82f0');g.addColorStop(.55,'#6aa6fb');g.addColorStop(1,'#b3e0ff');
+  x.fillStyle=g;x.fillRect(0,0,256,224);
+}
+function mountains(ox){
+  const base=168;
+  for(let i=-1;i<4;i++){
+    const X=i*84-(ox%84),top=base-44;
+    x.fillStyle='#7d86c8';
+    x.beginPath();x.moveTo(X,base);x.lineTo(X+42,top);x.lineTo(X+84,base);x.closePath();x.fill();
+    x.fillStyle='#9aa2da';
+    x.beginPath();x.moveTo(X+42,top);x.lineTo(X+30,base);x.lineTo(X+54,base);x.closePath();x.fill();
+    p('#eef2ff',X+38,top+2,8,4); // snow cap
+  }
+  p('#7d86c8',0,base,256,4);
+}
+function cloud(X,Y){
+  p('#dff0ff',X,Y+9,40,4);
+  p('#ffffff',X+3,Y+4,34,8);p('#ffffff',X+10,Y,16,9);p('#ffffff',X+22,Y+1,12,8);
+  p('#c6e6ff',X+3,Y+11,34,2);
+}
+function tree(X,base){
+  p('#5a3a18',X+5,base-10,4,10);p('#3f280f',X+5,base-10,1,10);
+  p('#1f7a2a',X,base-22,14,12);p('#2aa83a',X+2,base-22,10,8);
+  p('#1a5e22',X,base-12,14,3);p('#54c81e',X+3,base-20,3,2);
+  p('#1f7a2a',X+3,base-26,8,6);
+}
+function bush(X,Y){
+  p('#1f8c1f',X,Y+6,46,7);p('#2aa82a',X+1,Y+6,44,4);
+  p('#2aa82a',X+6,Y+1,14,7);p('#2aa82a',X+24,Y-1,14,9);
+  p('#54c81e',X+9,Y+2,4,2);p('#54c81e',X+27,Y+1,4,2);
+  p('#176a17',X,Y+11,46,2);
+}
+
+/* ============================================================
+   TILES
+============================================================ */
+function ground(X,Y){
+  // grass crown
+  p('#2aa82a',X,Y,16,5);p('#54d836',X,Y,16,2);
+  p('#1f8c1f',X,Y+4,16,1);
+  p('#54d836',X+2,Y+1,1,2);p('#54d836',X+7,Y+1,1,2);p('#54d836',X+12,Y+1,1,2);
+  // dirt body with ramp shading
+  p('#b8631f',X,Y+5,16,11);
+  p('#d07f33',X+1,Y+5,14,4);            // light
+  p('#9c4c14',X,Y+12,16,4);             // shadow base
+  p('#8a3f10',X,Y+5,1,11);p('#d68a45',X+1,Y+5,1,9); // bevels
+  // pebbles
+  p('#e0a060',X+3,Y+7,2,2);p('#7a3a0e',X+9,Y+8,2,2);
+  p('#e0a060',X+11,Y+11,2,2);p('#7a3a0e',X+5,Y+12,2,2);
+}
+function brick(X,Y){
+  p('#7a3a0e',X,Y,16,16);
+  p('#c4702e',X+1,Y+1,14,6);p('#c4702e',X+1,Y+9,6,6);p('#c4702e',X+9,Y+9,6,6);
+  p('#e09a55',X+1,Y+1,14,1);p('#e09a55',X+1,Y+9,6,1);p('#e09a55',X+9,Y+9,6,1); // hi
+  p('#9c4c14',X+1,Y+6,14,1);p('#9c4c14',X+1,Y+14,14,1);                        // shadow
+  p('#5f2c09',X+7,Y+1,1,6);p('#5f2c09',X+8,Y+9,1,6);                           // mortar
+}
+function qblock(X,Y,t){
+  const pulse=(Math.sin(t/18)+1)/2;
+  const a=`rgb(${224+Math.round(pulse*28)},${150+Math.round(pulse*40)},20)`;
+  p('#7a4400',X,Y,16,16);p(a,X+1,Y+1,14,14);
+  p('#ffd86a',X+1,Y+1,14,2);p('#ffe9a8',X+1,Y+1,5,1);  // top sheen
+  p('#a85f00',X+1,Y+13,14,1);
+  p('#ffe9a8',X+2,Y+2,1,1);p('#ffe9a8',X+13,Y+2,1,1);
+  p('#ffe9a8',X+2,Y+13,1,1);p('#ffe9a8',X+13,Y+13,1,1);
+  // "?" with shadow
+  p('#5a2e00',X+6,Y+5,4,1);p('#5a2e00',X+10,Y+6,1,2);p('#5a2e00',X+8,Y+8,1,2);
+  p('#5a2e00',X+7,Y+11,2,2);p('#fff4c0',X+6,Y+4,4,1);
+}
+function pipe(X,Y,h){
+  p('#0a7a3a',X,Y,32,8);p('#2adf76',X+2,Y+1,28,3);p('#19c46a',X+2,Y+4,28,2);
+  p('#0a5a2a',X,Y+7,32,1);p('#0d3f20',X,Y,1,8);p('#0d3f20',X+31,Y,1,8);
+  for(let i=0;i<h;i++){const by=Y+8+i*T;
+    p('#0a7a3a',X+2,by,28,T);p('#2adf76',X+5,by,4,T);p('#19c46a',X+9,by,2,T);
+    p('#0a5a2a',X+24,by,4,T);p('#0d3f20',X+2,by,1,T);p('#0d3f20',X+29,by,1,T);}
+}
+function relic(X,Y,t){
+  const s=(Math.sin(t/10)+1)/2;
+  p('#0a7390',X+5,Y,6,2);p('#0a7390',X+3,Y+2,10,2);
+  p('#2ad0f0',X+4,Y+2,8,2);p('#16b8e0',X+2,Y+4,12,7);
+  p('#7fe6ff',X+4,Y+4,3,4);p('#0a8ab0',X+3,Y+11,10,3);
+  p('#16b8e0',X+5,Y+12,6,2);
+  p(`rgba(255,255,255,${.4+s*.5})`,X+5,Y+3,2,2); // sparkle
+}
+
+/* ============================================================
+   CRYPTIDS
+============================================================ */
+function mothman(X,Y,t){
+  const f=Math.sin(t/7);const wy=Math.round(f*2);
+  // wings (3-tone, layered)
+  p('#2b2b40',X-5,Y+3+wy,8,11);p('#2b2b40',X+13,Y+3+wy,8,11);
+  p('#3d3d5a',X-4,Y+5+wy,6,8);p('#3d3d5a',X+14,Y+5+wy,6,8);
+  p('#53536f',X-3,Y+7+wy,3,5);p('#53536f',X+16,Y+7+wy,3,5);
+  // body
+  p('#1c1c2a',X+3,Y+2,10,14);p('#33334a',X+4,Y+3,8,11);
+  p('#43435e',X+5,Y+4,2,7); // sheen
+  p('#15151f',X+5,Y+14,2,3);p('#15151f',X+9,Y+14,2,3);
+  // head + antennae
+  p('#222232',X+4,Y,8,4);p('#222232',X+4,Y-2,1,2);p('#222232',X+11,Y-2,1,2);
+  // glowing eyes + bloom
+  p('rgba(255,40,40,.35)',X+3,Y+1,10,5);
+  p('#ff2a2a',X+4,Y+2,3,3);p('#ff2a2a',X+9,Y+2,3,3);
+  p('#ffd0d0',X+5,Y+2,1,1);p('#ffd0d0',X+10,Y+2,1,1);
+  p('#0a0a12',X+6,Y+8,4,4);
+}
+function grunt(X,Y){
+  p('#2f4a14',X+1,Y+10,5,5);p('#2f4a14',X+10,Y+10,5,5); // feet
+  p('#1f3310',X+1,Y+13,5,2);p('#1f3310',X+10,Y+13,5,2);
+  p('#4a7320',X+1,Y+1,14,11);p('#6fa838',X+2,Y+2,12,8); // body
+  p('#8ec84e',X+3,Y+2,10,3);                            // top light
+  p('#2f4a14',X+1,Y+10,14,2);
+  p('#3a5a18',X+3,Y-1,2,3);p('#3a5a18',X+11,Y-1,2,3);   // horns
+  p('#fff',X+4,Y+4,3,3);p('#fff',X+9,Y+4,3,3);
+  p('#000',X+5,Y+5,2,2);p('#000',X+10,Y+5,2,2);
+  p('#243a0e',X+4,Y+3,3,1);p('#243a0e',X+9,Y+3,3,1);     // brows
+  p('#243a0e',X+5,Y+9,6,1);                              // frown
+}
+
+/* ============================================================
+   HEROES (detailed, shaded)  — ~16 wide x 30 tall
+============================================================ */
+function jack(X,Y){
+  // shoes: red high-tops
+  p('#8f1420',X,Y+26,7,4);p('#8f1420',X+9,Y+26,7,4);
+  p('#c81f2a',X,Y+25,7,2);p('#c81f2a',X+9,Y+25,7,2);
+  p('#f2f2f2',X,Y+29,7,1);p('#f2f2f2',X+9,Y+29,7,1);
+  p('#fff',X+4,Y+26,1,2);p('#fff',X+11,Y+26,1,2);
+  // jeans + cuffs + shading
+  p('#20306f',X+2,Y+18,5,8);p('#20306f',X+9,Y+18,5,8);
+  p('#2d3f8f',X+2,Y+18,3,7);p('#2d3f8f',X+9,Y+18,3,7);
+  p('#6f80d8',X+2,Y+24,5,2);p('#6f80d8',X+9,Y+24,5,2);   // rolled cuffs
+  p('#172456',X+7,Y+18,2,8);                              // inseam shadow
+  // black tee with shading + original blue emblem
+  p('#15151c',X+1,Y+10,14,9);p('#24242e',X+2,Y+11,12,6);
+  p('#34343f',X+2,Y+11,12,1);                             // collar light
+  p('#0e0e14',X+1,Y+17,14,2);                             // hem shadow
+  p('#2f8bdf',X+6,Y+12,4,4);p('#7cc4ff',X+6,Y+12,2,2);p('#fff',X+7,Y+12,1,1); // emblem
+  // arms
+  p('#d89a6a',X+0,Y+11,2,6);p('#d89a6a',X+14,Y+11,2,6);
+  p('#f0c090',X+0,Y+11,1,5);p('#f0c090',X+15,Y+11,1,5);
+  // head + face shading
+  p('#d89a6a',X+3,Y+3,10,8);p('#f0c090',X+3,Y+3,9,6);p('#ffd9a8',X+4,Y+4,6,2);
+  p('#ec9a86',X+3,Y+8,2,2);p('#ec9a86',X+11,Y+8,2,2);     // cheeks
+  // hair (4-tone tousled)
+  p('#3f2410',X+2,Y,12,5);p('#6a3d17',X+2,Y+1,12,3);
+  p('#8f5a25',X+4,Y+1,6,1);p('#b07a3a',X+5,Y,3,1);
+  p('#3f2410',X+2,Y+4,2,3);p('#3f2410',X+12,Y+4,2,3);
+  p('#6a3d17',X+9,Y,3,2);
+  // eyes + smile
+  p('#fff',X+4,Y+6,3,2);p('#fff',X+9,Y+6,3,2);
+  p('#3a2a18',X+5,Y+6,1,2);p('#3a2a18',X+10,Y+6,1,2);
+  p('#000',X+5,Y+7,1,1);p('#000',X+10,Y+7,1,1);
+  p('#a83020',X+6,Y+9,4,1);p('#ec9a86',X+6,Y+10,4,1);
+}
+function evee(X,Y){
+  // shoes
+  p('#52246f',X+3,Y+26,4,4);p('#52246f',X+9,Y+26,4,4);
+  p('#9a5fc4',X+3,Y+26,4,1);p('#9a5fc4',X+9,Y+26,4,1);
+  p('#fff',X+3,Y+29,4,1);p('#fff',X+9,Y+29,4,1);
+  // dress (flared, shaded with folds)
+  p('#8a3eb8',X+1,Y+16,14,10);p('#a657d2',X+2,Y+16,12,9);
+  p('#c184e6',X+3,Y+16,4,8);p('#c184e6',X+9,Y+17,3,7); // fold highlights
+  p('#ddb0f4',X+4,Y+17,2,6);
+  p('#7a32a2',X+1,Y+24,14,2);                          // hem shadow
+  p('#8a3eb8',X+6,Y+18,1,7);p('#8a3eb8',X+10,Y+19,1,6);// fold shadows
+  // sparkles
+  p('#fff',X+4,Y+20,1,1);p('#fff',X+11,Y+22,1,1);p('#fff',X+8,Y+18,1,1);p('#fff',X+6,Y+23,1,1);
+  // bodice + gold trim + lacing
+  p('#9a4ac0',X+5,Y+11,6,6);p('#b878e0',X+6,Y+12,4,4);
+  p('#ffce4a',X+5,Y+11,6,1);p('#fff0b0',X+6,Y+11,2,1);
+  p('#ffce4a',X+7,Y+13,1,1);p('#ffce4a',X+8,Y+15,1,1);
+  // puff sleeves + arms
+  p('#c184e6',X+1,Y+11,3,3);p('#c184e6',X+12,Y+11,3,3);
+  p('#ddb0f4',X+1,Y+11,2,1);p('#ddb0f4',X+13,Y+11,1,1);
+  p('#d89a6a',X+2,Y+13,2,4);p('#d89a6a',X+12,Y+13,2,4);
+  p('#f0c090',X+2,Y+13,1,3);p('#f0c090',X+13,Y+13,1,3);
+  // head + face
+  p('#d89a6a',X+4,Y+3,8,8);p('#f0c090',X+4,Y+3,7,6);p('#ffd9a8',X+5,Y+4,5,2);
+  p('#ec9a86',X+4,Y+8,2,2);p('#ec9a86',X+10,Y+8,2,2);
+  // long wavy auburn hair (4-tone)
+  p('#5a2f15',X+2,Y+1,12,7);p('#7e4420',X+3,Y+1,10,4);
+  p('#a4632e',X+4,Y+1,7,1);p('#c98a4a',X+5,Y+1,3,1);
+  p('#5a2f15',X+1,Y+5,3,11);p('#5a2f15',X+12,Y+5,3,11);   // side waves
+  p('#7e4420',X+1,Y+7,2,2);p('#7e4420',X+13,Y+9,2,2);
+  p('#7e4420',X+1,Y+13,3,3);p('#7e4420',X+12,Y+13,3,3);
+  p('#5a2f15',X+3,Y+3,1,5);p('#5a2f15',X+12,Y+3,1,5);     // frame
+  // pink headband + highlight
+  p('#ef62a6',X+3,Y+1,10,1);p('#ff9ccb',X+5,Y+1,3,1);
+  // eyes + smile
+  p('#fff',X+5,Y+6,2,2);p('#fff',X+9,Y+6,2,2);
+  p('#000',X+6,Y+6,1,2);p('#000',X+10,Y+6,1,2);
+  p('#7e4420',X+5,Y+5,2,1);p('#7e4420',X+9,Y+5,2,1);      // lashes/brows
+  p('#c83048',X+7,Y+9,3,1);p('#ec9a86',X+7,Y+10,3,1);
+}
+
+/* ============================================================
+   HUD
+============================================================ */
+function face(X,Y,who){
+  if(who==='jack'){p('#3f2410',X,Y,8,3);p('#f0c090',X+1,Y+2,6,5);
+    p('#ec9a86',X+1,Y+5,1,1);p('#ec9a86',X+6,Y+5,1,1);
+    p('#000',X+2,Y+4,1,1);p('#000',X+5,Y+4,1,1);p('#a83020',X+3,Y+6,2,1);}
+  else{p('#5a2f15',X,Y,8,4);p('#ef62a6',X,Y,8,1);p('#f0c090',X+1,Y+2,6,5);
+    p('#5a2f15',X,Y+3,1,4);p('#5a2f15',X+7,Y+3,1,4);
+    p('#000',X+2,Y+4,1,1);p('#000',X+5,Y+4,1,1);p('#c83048',X+3,Y+6,2,1);}
+}
+function hud(t){
+  p('rgba(8,8,20,.42)',0,0,256,15);p('rgba(255,255,255,.15)',0,15,256,1);
+  face(5,3,'jack');textShadow('JACK x3',16,4,'#ffffff');
+  textShadow('RELICS '+String(Math.floor(t/40)%100).padStart(2,'0'),86,4,'#ffe060');
+  textShadow('WORLD 1-1',176,4,'#ffffff');
+}
+
+/* ============================================================
+   SCENE
+============================================================ */
+let t=0;
+function frame(){
+  t++;
+  sky();
+  mountains(t*0.15);
+  cloud(28+((t*0.25)%320-40),24);cloud(150-((t*0.18)%340),38);cloud(220,16);
+  const gy=192;
+  tree(18,gy);tree(232,gy);
+  bush(50,gy-13);bush(196,gy-13);
+
+  // ground (with a small pit kept filled on lower row)
+  for(let c=0;c<16;c++){ground(c*T,gy);ground(c*T,gy+T);}
+
+  // floating structures
+  brick(72,128);qblock(88,128,t);brick(104,128);qblock(168,104,t);
+  pipe(206,gy-32,2);
+
+  // collectibles
+  relic(92,Math.round(96+Math.sin(t/14)*2),t);
+  relic(172,Math.round(74+Math.sin(t/14+1)*2),t);
+
+  // cryptids
+  mothman(166,Math.round(150+Math.sin(t/16)*6),t);
+  grunt(130,gy-15);
+
+  // heroes
+  const b=Math.round(Math.sin(t/22)*1);
+  jack(56,gy-30+b);
+  evee(90,gy-30-b);
+
+  // goal flag
+  p('#cfcfd6',248,gy-66,2,66);p('#9a9aa6',249,gy-66,1,66);p('#ffd24a',247,gy-66,4,3);
+  p('#19c46a',236,gy-64,12,8);p('#0a7a3a',236,gy-64,12,1);p('#2adf76',237,gy-63,9,2);
+
+  hud(t);
+  requestAnimationFrame(frame);
+}
+frame();
+</script>
+</body>
+</html>

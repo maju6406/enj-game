@@ -118,16 +118,8 @@
     if (p.invuln > 0 && (Math.floor(p.invuln / 4) % 2 === 0)) return; // blink
     const h = p.big ? 44 : 30;
     const w = Math.round(h * aspect(p.who));
-    let sx = 1, sy = 1;
-    if (p.state === 'jump') {
-      if (p.vy < 0) { sy = 1.03; sx = 0.98; } else { sy = 0.98; sx = 1.02; }
-    } else if (p.state === 'walk') {
-      const b = Math.sin(p.animT / 4);
-      sy = 1 + b * 0.015; sx = 1 - b * 0.012;
-    } else {
-      sy = 1 + Math.sin(p.animT / 26) * 0.01;
-    }
-    const cx = Math.round(p.x + p.w / 2) - camX;
+    const sx = 1, sy = 1;
+    const cx = Math.round(p.x + p.w / 2 - camX);
     const footY = Math.round(p.y + p.h);
     Sprites.drawHero(ctx, p.who, cx, footY, w, h, p.facing, sx, sy);
   }

@@ -30,6 +30,7 @@ body {
 
 #game {
   /* SNES-like internal resolution scaled up with crisp pixels */
+  box-sizing: content-box;
   width: 768px;   /* 384 * 2 */
   height: 480px;  /* 240 * 2 */
   background: #5c94fc;
@@ -49,5 +50,5 @@ body {
 }
 
 @media (max-height: 560px) {
-  #game { width: 576px; height: 360px; } /* 384 * 1.5 */
+  #game { width: 384px; height: 240px; } /* 384 * 1 */
 }

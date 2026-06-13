@@ -155,7 +155,7 @@
     ctx.scale(sx || 1, sy || 1);
     if (img) {
       const prev = ctx.imageSmoothingEnabled;
-      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, -w / 2, -h, w, h);
       ctx.imageSmoothingEnabled = prev;
     } else {

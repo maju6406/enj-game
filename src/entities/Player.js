@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { PHYSICS, TILE, VIEW_H } from '../data/constants.js';
+import { HERO_DISPLAY, PHYSICS, TILE, VIEW_H } from '../data/constants.js';
 import { sfx } from '../systems/sfx.js';
 
 export class Player {
@@ -14,7 +14,7 @@ export class Player {
       .setOrigin(0.5, 1)
       .setDepth(10);
     this.setHeroDisplay(false);
-    this.setBody(12, 20);
+    this.setBody(14, 38);
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
   }
 
@@ -24,7 +24,7 @@ export class Player {
   }
 
   setHeroDisplay(big) {
-    const height = big ? 58 : 42;
+    const height = big ? HERO_DISPLAY.powered : HERO_DISPLAY.gameplay;
     this.sprite.setDisplaySize(Math.round(height * this.aspect()), height);
   }
 
@@ -41,7 +41,7 @@ export class Player {
     if (this.big === big) return;
     this.big = big;
     this.setHeroDisplay(big);
-    this.setBody(big ? 14 : 12, big ? 30 : 20);
+    this.setBody(big ? 18 : 14, big ? 52 : 38);
   }
 
   grow() { this.setBig(true); }

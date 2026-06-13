@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { VIEW_H, VIEW_W } from '../data/constants.js';
+import { HERO_DISPLAY, VIEW_H, VIEW_W } from '../data/constants.js';
 import { sfx, unlockSfx } from '../systems/sfx.js';
 
 function text(scene, value, x, y, size = 18, color = '#ffffff') {
@@ -27,8 +27,8 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
-    hero(this, 'jack', 88, VIEW_H - 40, 58);
-    hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, 58, true);
+    hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);
+    hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true);
     text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d');
     text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
@@ -51,8 +51,8 @@ export class SelectScene extends Phaser.Scene {
       this.add.rectangle(112, 118, 112, 138, 0x203050).setStrokeStyle(2, 0xffffff),
       this.add.rectangle(272, 118, 112, 138, 0x203050).setStrokeStyle(2, 0x505060),
     ];
-    hero(this, 'jack', 112, 145, 92);
-    hero(this, 'evee', 272, 145, 92);
+    hero(this, 'jack', 112, 145, HERO_DISPLAY.select);
+    hero(this, 'evee', 272, 145, HERO_DISPLAY.select);
     text(this, 'JACK', 112, 174, 14, '#ffffff');
     text(this, 'EVEE', 272, 174, 14, '#ffffff');
     text(this, 'LEFT / RIGHT  ENTER', VIEW_W / 2, 214, 10, '#b9b9d6');
@@ -90,8 +90,8 @@ export class WinScene extends Phaser.Scene {
   create(data) {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
-    hero(this, data.who || 'jack', 154, VIEW_H - 40, 74);
-    hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, 74, true);
+    hero(this, data.who || 'jack', 154, VIEW_H - 40, HERO_DISPLAY.win);
+    hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, HERO_DISPLAY.win, true);
     text(this, 'CRYPTIDS CATALOGED!', VIEW_W / 2, 54, 18, '#ffe060');
     text(this, `FINAL SCORE ${data.score || 0}`, VIEW_W / 2, 96, 12, '#ffffff');
     text(this, 'PRESS ENTER', VIEW_W / 2, 168, 14, '#ffffff');

@@ -12,17 +12,9 @@
     <div id="overlay-hint">Arrow keys to move &nbsp;•&nbsp; Up / Space to jump</div>
   </div>
 
-  <!-- Modules (plain globals, loaded in dependency order) -->
-  <script src="js/config.js"></script>
-  <script src="js/input.js"></script>
-  <script src="js/audio.js"></script>
-  <script src="js/sprites.js"></script>
-  <script src="js/physics.js"></script>
-  <script src="js/levels-data.js"></script>
-  <script src="js/level.js"></script>
-  <script src="js/enemies.js"></script>
-  <script src="js/player.js"></script>
-  <script src="js/hud.js"></script>
-  <script src="js/main.js"></script>
+  <script type="importmap">
+    { "imports": { "phaser": "./node_modules/phaser/dist/phaser.esm.js" } }
+  </script>
+  <script type="module" src="src/main.js"></script>
 </body>
 </html>

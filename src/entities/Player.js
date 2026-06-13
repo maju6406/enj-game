@@ -12,10 +12,20 @@ export class Player {
     this.coyoteUntil = 0;
     this.sprite = scene.physics.add.sprite(x, y, `hero-${who}`)
       .setOrigin(0.5, 1)
-      .setDisplaySize(18, 30)
       .setDepth(10);
+    this.setHeroDisplay(false);
     this.setBody(12, 20);
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
+  }
+
+  aspect() {
+    const img = this.scene.textures.get(`hero-${this.who}`).getSourceImage();
+    return img.width / img.height;
+  }
+
+  setHeroDisplay(big) {
+    const height = big ? 58 : 42;
+    this.sprite.setDisplaySize(Math.round(height * this.aspect()), height);
   }
 
   setBody(displayW, displayH) {
@@ -30,7 +40,7 @@ export class Player {
   setBig(big) {
     if (this.big === big) return;
     this.big = big;
-    this.sprite.setDisplaySize(big ? 26 : 18, big ? 44 : 30);
+    this.setHeroDisplay(big);
     this.setBody(big ? 14 : 12, big ? 30 : 20);
   }
 

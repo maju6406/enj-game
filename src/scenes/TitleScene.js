@@ -12,14 +12,23 @@ function text(scene, value, x, y, size = 18, color = '#ffffff') {
   }).setOrigin(0.5).setResolution(1);
 }
 
+function hero(scene, who, x, footY, height, flip = false) {
+  const key = `hero-${who}`;
+  const img = scene.textures.get(key).getSourceImage();
+  return scene.add.image(x, footY, key)
+    .setOrigin(0.5, 1)
+    .setDisplaySize(Math.round(height * (img.width / img.height)), height)
+    .setFlipX(flip);
+}
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
-    this.add.image(88, VIEW_H - 40, 'hero-jack').setOrigin(0.5, 1).setDisplaySize(30, 52);
-    this.add.image(VIEW_W - 88, VIEW_H - 40, 'hero-evee').setOrigin(0.5, 1).setDisplaySize(30, 52).setFlipX(true);
+    hero(this, 'jack', 88, VIEW_H - 40, 58);
+    hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, 58, true);
     text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d');
     text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
@@ -42,8 +51,8 @@ export class SelectScene extends Phaser.Scene {
       this.add.rectangle(112, 118, 112, 138, 0x203050).setStrokeStyle(2, 0xffffff),
       this.add.rectangle(272, 118, 112, 138, 0x203050).setStrokeStyle(2, 0x505060),
     ];
-    this.add.image(112, 145, 'hero-jack').setOrigin(0.5, 1).setDisplaySize(48, 86);
-    this.add.image(272, 145, 'hero-evee').setOrigin(0.5, 1).setDisplaySize(48, 86);
+    hero(this, 'jack', 112, 145, 92);
+    hero(this, 'evee', 272, 145, 92);
     text(this, 'JACK', 112, 174, 14, '#ffffff');
     text(this, 'EVEE', 272, 174, 14, '#ffffff');
     text(this, 'LEFT / RIGHT  ENTER', VIEW_W / 2, 214, 10, '#b9b9d6');
@@ -81,8 +90,8 @@ export class WinScene extends Phaser.Scene {
   create(data) {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
-    this.add.image(154, VIEW_H - 40, `hero-${data.who || 'jack'}`).setOrigin(0.5, 1).setDisplaySize(38, 68);
-    this.add.image(230, VIEW_H - 40, data.who === 'evee' ? 'hero-jack' : 'hero-evee').setOrigin(0.5, 1).setDisplaySize(38, 68).setFlipX(true);
+    hero(this, data.who || 'jack', 154, VIEW_H - 40, 74);
+    hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, 74, true);
     text(this, 'CRYPTIDS CATALOGED!', VIEW_W / 2, 54, 18, '#ffe060');
     text(this, `FINAL SCORE ${data.score || 0}`, VIEW_W / 2, 96, 12, '#ffffff');
     text(this, 'PRESS ENTER', VIEW_W / 2, 168, 14, '#ffffff');

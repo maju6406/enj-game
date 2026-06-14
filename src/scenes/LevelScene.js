@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { GAMEPLAY_ZOOM, HAZARD, PHYSICS, SCORE, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
+import { GAMEPLAY_ZOOM, HAZARD, HERO_DISPLAY, PHYSICS, SCORE, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
 import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
@@ -28,6 +28,7 @@ export class LevelScene extends Phaser.Scene {
     this.lives = data.lives ?? START_LIVES;
     this.relics = data.relics || 0;
     this.score = data.score || 0;
+    this.respawn = data.respawn || null;
     this.demo = !!data.demo;
     this.dying = false;
     this.clearing = false;
@@ -55,7 +56,12 @@ export class LevelScene extends Phaser.Scene {
     this.addDecorations();
     this.buildWorld();
 
-    this.player = new Player(this, this.who, this.level.start.x + 8, this.level.start.y + 20);
+    const spawn = this.respawn || this.defaultSpawn();
+    this.player = new Player(this, this.who, spawn.x, spawn.y);
+    if (this.respawn) {
+      this.player.invulnUntil = this.time.now + 1800;
+      this.addSparkle(spawn.x, spawn.y - HERO_DISPLAY.gameplay / 2, 0xfff2c0);
+    }
     this.cameras.main.startFollow(this.player.sprite, true, 1, 1);
     this.cameras.main.setBounds(0, 0, this.level.width * TILE, VIEW_H);
 
@@ -72,7 +78,7 @@ export class LevelScene extends Phaser.Scene {
     this.physics.add.collider(this.items, this.solids);
     this.physics.add.overlap(this.player.sprite, this.coins, (_, coin) => this.collectRelic(coin));
     this.physics.add.overlap(this.player.sprite, this.items, (_, item) => this.collectItem(item));
-    this.physics.add.overlap(this.player.sprite, this.hazards, () => this.killPlayer());
+    this.physics.add.overlap(this.player.sprite, this.hazards, () => this.killPlayer('hazard'));
     this.physics.add.overlap(this.player.sprite, this.enemies, (_, enemy) => this.touchEnemy(enemy));
     this.physics.add.overlap(this.enemies, this.enemies, (a, b) => this.enemyTouchesEnemy(a, b));
 
@@ -94,7 +100,7 @@ export class LevelScene extends Phaser.Scene {
     this.timeLeft = this.level.time;
     this.timerEvent = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
       if (this.pausedByOverlay) return;
-      this.timeLeft -= 1; if (this.timeLeft <= 0) this.killPlayer();
+      this.timeLeft -= 1; if (this.timeLeft <= 0) this.killPlayer('timeout');
     } });
     if (this.demo) {
       this.demoStartedAt = this.time.now;
@@ -280,7 +286,7 @@ export class LevelScene extends Phaser.Scene {
       this.player.bounce(false);
       return;
     }
-    if (this.player.damage(enemy.x)) this.killPlayer();
+    if (this.player.damage(enemy.x)) this.killPlayer('enemy');
   }
 
   enemyTouchesEnemy(a, b) {
@@ -301,10 +307,11 @@ export class LevelScene extends Phaser.Scene {
     return enemy.kind === 'chupacabra' && enemy.shell && Math.abs(enemy.body.velocity.x) >= 80;
   }
 
-  killPlayer() {
+  killPlayer(reason = 'damage') {
     if (this.dying) return;
     this.dying = true;
     this.lives -= 1;
+    this.nextRespawn = this.findRespawnPoint(reason);
     sfx('die');
     this.playDeathSequence();
     this.time.delayedCall(1600, () => {
@@ -314,8 +321,69 @@ export class LevelScene extends Phaser.Scene {
         return;
       }
       if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
-      else this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score });
+      else this.scene.start('Level', {
+        who: this.who,
+        levelIndex: this.levelIndex,
+        lives: this.lives,
+        relics: this.relics,
+        score: this.score,
+        respawn: this.nextRespawn,
+      });
     });
+  }
+
+  defaultSpawn() {
+    return { x: this.level.start.x + 8, y: this.level.start.y + 20 };
+  }
+
+  findRespawnPoint(reason) {
+    if (!this.player?.sprite || !this.level) return this.defaultSpawn();
+    const tx = Phaser.Math.Clamp(Math.floor(this.player.sprite.x / TILE), 1, this.level.width - 2);
+    const searchRightFirst = reason === 'fall' || reason === 'hazard';
+    const preferred = searchRightFirst ? this.findSafeSpawn(tx + 1, 1) : this.findNearestSafeSpawn(tx);
+    const fallback = searchRightFirst ? this.findNearestSafeSpawn(tx) : this.findSafeSpawn(tx + 1, 1);
+    return preferred || fallback || this.defaultSpawn();
+  }
+
+  findNearestSafeSpawn(tx) {
+    for (let offset = 0; offset < 24; offset++) {
+      const right = this.findSafeSpawn(tx + offset, 1, 1);
+      if (right) return right;
+      const left = this.findSafeSpawn(tx - offset, -1, 1);
+      if (left) return left;
+    }
+    return null;
+  }
+
+  findSafeSpawn(startTx, direction, maxSteps = 48) {
+    const minTx = 1;
+    const maxTx = this.level.width - 2;
+    let steps = 0;
+    for (let tx = Phaser.Math.Clamp(startTx, minTx, maxTx); tx >= minTx && tx <= maxTx && steps < maxSteps; tx += direction, steps++) {
+      const spawn = this.safeSpawnAtColumn(tx);
+      if (spawn) return spawn;
+    }
+    return null;
+  }
+
+  safeSpawnAtColumn(tx) {
+    for (let y = 1; y < this.level.height; y++) {
+      const tile = this.tileAt(tx, y);
+      if (!SOLID.has(tile) || HAZARD.has(tile)) continue;
+      const head = this.tileAt(tx, y - 2);
+      const body = this.tileAt(tx, y - 1);
+      if (SOLID.has(head) || SOLID.has(body) || HAZARD.has(head) || HAZARD.has(body)) continue;
+      return {
+        x: tx * TILE + TILE / 2,
+        y: (y - 1) * TILE + 4,
+      };
+    }
+    return null;
+  }
+
+  tileAt(tx, ty) {
+    if (ty < 0 || ty >= this.level.height || tx < 0 || tx >= this.level.width) return ' ';
+    return this.level.tiles[ty]?.[tx] || ' ';
   }
 
   playDeathSequence() {

@@ -82,7 +82,7 @@ export class Player {
     }
 
     this.sprite.setAlpha(this.scene.time.now < this.invulnUntil && Math.floor(this.scene.time.now / 80) % 2 === 0 ? 0.35 : 1);
-    if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer();
+    if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer('fall');
   }
 
   bounce() { this.sprite.setVelocityY(PHYSICS.stompBounce); }

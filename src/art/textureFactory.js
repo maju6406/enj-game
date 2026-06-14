@@ -47,32 +47,53 @@ function hazard(scene, key, color) {
 
 function questionTile(scene) {
   const [c, ctx] = canvas(TILE, TILE);
-  rect(ctx, 0, 0, TILE, TILE, '#d8892c');
-  outline(ctx, 0, 0, TILE, TILE, '#ffd66e', '#7a3c08');
+  rect(ctx, 0, 0, TILE, TILE, '#6b3208');
+  rect(ctx, 1, 1, 14, 14, '#d8892c');
+  rect(ctx, 2, 2, 12, 3, '#ffd66e');
+  rect(ctx, 2, 5, 3, 9, '#f1a23a');
+  rect(ctx, 12, 4, 2, 10, '#8a430b');
+  rect(ctx, 4, 4, 1, 1, '#fff5a0');
+  rect(ctx, 11, 4, 1, 1, '#fff5a0');
+  rect(ctx, 4, 11, 1, 1, '#7a3c08');
+  rect(ctx, 11, 11, 1, 1, '#7a3c08');
   rect(ctx, 6, 3, 5, 2, '#fff5a0');
   rect(ctx, 10, 5, 2, 3, '#fff5a0');
   rect(ctx, 7, 8, 4, 2, '#fff5a0');
   rect(ctx, 7, 12, 3, 2, '#fff5a0');
-  rect(ctx, 5, 3, 1, 1, '#7a3c08');
-  rect(ctx, 11, 9, 1, 1, '#7a3c08');
+  rect(ctx, 6, 4, 1, 1, '#b86e00');
+  rect(ctx, 11, 8, 1, 1, '#7a3c08');
   add(scene, 'tile-question', c);
 }
 
 function coin(scene) {
-  const [c, ctx] = canvas(10, 14);
-  rect(ctx, 3, 1, 4, 12, '#ffb51f');
-  rect(ctx, 1, 3, 8, 8, '#ffe060');
-  rect(ctx, 4, 3, 2, 8, '#fff5a0');
-  outline(ctx, 1, 3, 8, 8, '#fff5a0', '#b86e00');
+  const [c, ctx] = canvas(14, 16);
+  rect(ctx, 4, 1, 6, 14, '#9a5a00');
+  rect(ctx, 2, 3, 10, 10, '#b86e00');
+  rect(ctx, 3, 2, 8, 10, '#ffe060');
+  rect(ctx, 5, 3, 4, 8, '#fff5a0');
+  rect(ctx, 4, 11, 7, 2, '#ffb51f');
+  rect(ctx, 3, 4, 2, 7, '#ffd34d');
+  rect(ctx, 10, 5, 1, 6, '#a46400');
+  rect(ctx, 6, 5, 2, 5, '#ffca30');
+  rect(ctx, 5, 4, 1, 1, '#ffffff');
   add(scene, 'relic', c);
 }
 
 function journal(scene) {
-  const [c, ctx] = canvas(14, 14);
-  rect(ctx, 2, 1, 10, 12, '#7ad6ff');
-  outline(ctx, 2, 1, 10, 12, '#d9fbff', '#205a86');
-  rect(ctx, 5, 3, 1, 8, '#205a86');
-  rect(ctx, 8, 5, 2, 1, '#205a86');
+  const [c, ctx] = canvas(16, 16);
+  rect(ctx, 1, 1, 14, 14, '#17304a');
+  rect(ctx, 3, 1, 10, 14, '#7ad6ff');
+  rect(ctx, 4, 2, 8, 12, '#bff5ff');
+  rect(ctx, 3, 11, 10, 3, '#4ba6d8');
+  rect(ctx, 2, 2, 3, 12, '#205a86');
+  rect(ctx, 5, 3, 1, 10, '#17304a');
+  rect(ctx, 8, 4, 3, 1, '#205a86');
+  rect(ctx, 8, 7, 3, 1, '#205a86');
+  rect(ctx, 9, 10, 2, 1, '#205a86');
+  rect(ctx, 7, 5, 1, 5, '#fff5a0');
+  rect(ctx, 6, 7, 3, 1, '#fff5a0');
+  rect(ctx, 12, 3, 1, 9, '#17304a');
+  rect(ctx, 4, 2, 3, 1, '#ffffff');
   add(scene, 'journal', c);
 }
 
@@ -186,9 +207,15 @@ function enemies(scene) {
 }
 
 function hud(scene) {
-  const [heart, hctx] = canvas(9, 8);
-  rect(hctx, 1, 1, 3, 3, '#ff6a8a'); rect(hctx, 5, 1, 3, 3, '#ff6a8a');
-  rect(hctx, 0, 3, 9, 2, '#ff3b60'); rect(hctx, 2, 5, 5, 2, '#c71f46'); rect(hctx, 4, 7, 1, 1, '#8d102d');
+  const [heart, hctx] = canvas(11, 10);
+  rect(hctx, 1, 1, 3, 2, '#5f0b22'); rect(hctx, 7, 1, 3, 2, '#5f0b22');
+  rect(hctx, 0, 3, 11, 3, '#5f0b22');
+  rect(hctx, 2, 2, 3, 3, '#ff6a8a'); rect(hctx, 6, 2, 3, 3, '#ff6a8a');
+  rect(hctx, 1, 4, 9, 2, '#ff3b60');
+  rect(hctx, 3, 6, 5, 2, '#c71f46');
+  rect(hctx, 5, 8, 1, 1, '#8d102d');
+  rect(hctx, 3, 2, 1, 1, '#ffc0d0');
+  rect(hctx, 7, 2, 1, 1, '#ffc0d0');
   add(scene, 'heart', heart);
 }
 

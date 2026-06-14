@@ -66,9 +66,10 @@ export function stompEnemy(scene, e) {
   }
   if (e.kind === 'chupacabra' && !e.shell) {
     e.shell = true;
+    e.setTexture('enemy-chupacabra-shell');
     e.setVelocityX(0);
-    e.setDisplaySize(18, 10);
-    setBody(e, 16, 8);
+    e.setDisplaySize(22, 12);
+    setBody(e, 18, 9);
     return true;
   }
   if (e.kind === 'chupacabra' && e.shell && Math.abs(e.body.velocity.x) < 5) {

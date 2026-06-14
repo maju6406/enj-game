@@ -181,7 +181,7 @@ export class PowerupsScene extends Phaser.Scene {
       menuPanel(this, x, cardY, 126, 74);
       const img = sprite(this, key, x, cardY + 4, height);
       text(this, name, x, cardY + 21, name.length > 8 ? 6 : 8, '#ffffff');
-      text(this, desc, x, cardY + 34, 6, '#fff2c0');
+      text(this, desc, x, cardY + 30, 6, '#fff2c0');
       this.tweens.add({ targets: img, y: '-=2', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 

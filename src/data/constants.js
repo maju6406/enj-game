@@ -18,8 +18,9 @@ export const HAZARD = new Set(['^', 'v']);
 export const PHYSICS = {
   gravity: 600,
   maxRun: 100,
-  jumpVelocity: -240,
+  jumpVelocity: -560,
   enemySpeed: 40,
+  powerupSpeed: 42,
   shellSpeed: 120,
   stompBounce: -144,
   hurtKnockX: 90,

@@ -45,7 +45,7 @@ export class LevelScene extends Phaser.Scene {
     this.solids = this.physics.add.staticGroup();
     this.hazards = this.physics.add.staticGroup();
     this.coins = this.physics.add.staticGroup();
-    this.items = this.physics.add.group({ allowGravity: false });
+    this.items = this.physics.add.group();
     this.enemies = this.physics.add.group();
     this.blockSprites = new Map();
     this.touch = { left: false, right: false, jump: false };
@@ -180,8 +180,29 @@ export class LevelScene extends Phaser.Scene {
     }
     if (ch === 'U') {
       sfx('power');
-      this.ignoreUi(this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'));
+      this.spawnPowerUp(block.x, block.y);
     }
+  }
+
+  spawnPowerUp(x, y) {
+    const item = this.ignoreUi(this.items.create(x, y - 6, 'journal'));
+    item.setDepth(7);
+    item.body.allowGravity = false;
+    item.body.checkCollision.none = true;
+    item.setData('direction', 1);
+    item.setVelocity(0, 0);
+    this.tweens.add({
+      targets: item,
+      y: y - TILE,
+      duration: 320,
+      ease: 'Quad.easeOut',
+      onComplete: () => {
+        if (!item.active) return;
+        item.body.allowGravity = true;
+        item.body.checkCollision.none = false;
+        item.setVelocityX(PHYSICS.powerupSpeed);
+      },
+    });
   }
 
   collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, `+${SCORE.relic}`); coin.destroy(); sfx('coin'); this.addRelic(); }
@@ -371,6 +392,7 @@ export class LevelScene extends Phaser.Scene {
   update(time) {
     if (!this.player || this.dying || this.clearing) return;
     this.player.update(this.cursors, this.keys, this.touch);
+    this.updatePowerUps();
     this.enemies.children.each((e) => {
       if (e.y > VIEW_H + 96) {
         e.destroy();
@@ -379,5 +401,19 @@ export class LevelScene extends Phaser.Scene {
       updateEnemy(this, e, time);
     });
     this.updateHud();
+  }
+
+  updatePowerUps() {
+    this.items.children.each((item) => {
+      if (!item.active) return;
+      if (item.y > VIEW_H + 96) {
+        item.destroy();
+        return;
+      }
+      if (item.body.checkCollision.none) return;
+      if (item.body.blocked.left) item.setData('direction', 1);
+      if (item.body.blocked.right) item.setData('direction', -1);
+      item.setVelocityX((item.getData('direction') || 1) * PHYSICS.powerupSpeed);
+    });
   }
 }

@@ -42,9 +42,10 @@ export class TitleScene extends Phaser.Scene {
     text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
     const prompt = text(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
-    text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
+    const countdown = text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
     this.tweens.add({ targets: prompt, alpha: 0.25, yoyo: true, repeat: -1, duration: 600 });
     let started = false;
+    let remaining = 30;
     const start = () => {
       if (started) return;
       started = true;
@@ -56,10 +57,19 @@ export class TitleScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-UP', start);
     tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, start);
+    this.time.addEvent({
+      delay: 1000,
+      repeat: 29,
+      callback: () => {
+        if (started) return;
+        remaining -= 1;
+        countdown.setText(`DEMO STARTS IN ${remaining}`);
+      },
+    });
     this.time.delayedCall(30000, () => {
       if (started) return;
-      const who = Phaser.Math.RND.pick(['jack', 'evee']);
-      this.scene.start('Level', { who, levelIndex: 0, lives: 1, relics: 0, score: 0, demo: true });
+      started = true;
+      this.scene.start('Cast', { attract: true });
     });
   }
 }
@@ -73,29 +83,15 @@ export class CastScene extends Phaser.Scene {
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
 
-    text(this, 'THE CAST', VIEW_W / 2, 21, 18, '#ffd34d');
-    text(this, 'HEROES', 68, 47, 8, '#fff2c0');
-    text(this, 'CRYPTIDS', 291, 47, 8, '#fff2c0');
+    text(this, 'THE CAST', VIEW_W / 2, 25, 20, '#ffd34d');
+    text(this, 'JACK & EVEE', VIEW_W / 2, 51, 10, '#fff2c0');
 
-    this.add.rectangle(66, 98, 92, 96, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
-    this.add.rectangle(166, 98, 92, 96, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
-    hero(this, 'jack', 66, 119, 62);
-    hero(this, 'evee', 166, 119, 62);
-    text(this, 'JACK', 66, 139, 8);
-    text(this, 'EVEE', 166, 139, 8);
-
-    const cryptids = [
-      ['enemy-grunt', 'GRUNT', 250, 105, 33],
-      ['enemy-chupacabra', 'CHUPA', 330, 105, 32],
-      ['enemy-mothman', 'MOTHMAN', 250, 181, 36],
-      ['enemy-boss', 'BIGFOOT', 330, 181, 50],
-    ];
-
-    for (const [key, name, x, footY, height] of cryptids) {
-      this.add.rectangle(x, footY - 24, 70, 58, 0x101020, 0.5).setStrokeStyle(1, 0xd9f3ff);
-      sprite(this, key, x, footY, height);
-      text(this, name, x, footY + 19, name.length > 6 ? 6 : 7, '#ffffff');
-    }
+    this.add.rectangle(119, 124, 112, 136, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
+    this.add.rectangle(265, 124, 112, 136, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
+    hero(this, 'jack', 119, 156, 92);
+    hero(this, 'evee', 265, 156, 92);
+    text(this, 'JACK', 119, 183, 11);
+    text(this, 'EVEE', 265, 183, 11);
 
     text(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
 
@@ -140,6 +136,51 @@ export class CryptidsScene extends Phaser.Scene {
       this.add.rectangle(x, cardY, 112, 70, 0x203050, 0.76).setStrokeStyle(2, 0xd9f3ff);
       sprite(this, key, x, footY, height);
       text(this, name, x, cardY + 25, name.length > 6 ? 7 : 8, '#ffffff');
+    }
+
+    text(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
+
+    let advanced = false;
+    const play = () => {
+      if (advanced) return;
+      advanced = true;
+      unlockSfx();
+      sfx('select');
+      this.scene.start('Select');
+    };
+    this.input.keyboard.once('keydown-ENTER', play);
+    this.input.keyboard.once('keydown-SPACE', play);
+    this.input.keyboard.once('keydown-UP', play);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, play);
+    if (data.attract) {
+      this.time.delayedCall(20000, () => {
+        if (!advanced) this.scene.start('Powerups', { attract: true });
+      });
+    }
+  }
+}
+
+export class PowerupsScene extends Phaser.Scene {
+  constructor() { super('Powerups'); }
+
+  create(data = {}) {
+    this.cameras.main.setBackgroundColor('#101020');
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
+
+    text(this, 'POWER UPS', VIEW_W / 2, 22, 18, '#ffd34d');
+
+    const powerups = [
+      ['tile-question', 'POWER BLOCK', 105, 75, 38],
+      ['journal', 'JOURNAL', 279, 75, 34],
+      ['relic', 'RELIC', 105, 157, 30],
+      ['heart', 'LIFE HEART', 279, 157, 28],
+    ];
+
+    for (const [key, name, x, cardY, height] of powerups) {
+      this.add.rectangle(x, cardY, 112, 70, 0x203050, 0.76).setStrokeStyle(2, 0xd9f3ff);
+      sprite(this, key, x, cardY + 7, height);
+      text(this, name, x, cardY + 25, name.length > 8 ? 6 : 8, '#ffffff');
     }
 
     text(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');

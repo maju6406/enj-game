@@ -31,6 +31,7 @@ export class LevelScene extends Phaser.Scene {
     this.demo = !!data.demo;
     this.dying = false;
     this.clearing = false;
+    this.pausedByOverlay = false;
   }
 
   create() {
@@ -59,7 +60,12 @@ export class LevelScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.level.width * TILE, VIEW_H);
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys({ space: Phaser.Input.Keyboard.KeyCodes.SPACE, enter: Phaser.Input.Keyboard.KeyCodes.ENTER });
+    this.keys = this.input.keyboard.addKeys({
+      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
+      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      p: Phaser.Input.Keyboard.KeyCodes.P,
+      esc: Phaser.Input.Keyboard.KeyCodes.ESC,
+    });
 
     this.physics.add.collider(this.player.sprite, this.solids, (_player, block) => this.handleBlockBump(block));
     this.physics.add.collider(this.enemies, this.solids);
@@ -82,9 +88,12 @@ export class LevelScene extends Phaser.Scene {
     this.uiCamera.ignore(this.children.list);
     this.createHud();
     this.createTouchControls();
+    this.createPauseControls();
+    this.showLevelIntro();
     if (this.demo) this.createDemoHud();
     this.timeLeft = this.level.time;
     this.timerEvent = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
+      if (this.pausedByOverlay) return;
       this.timeLeft -= 1; if (this.timeLeft <= 0) this.killPlayer();
     } });
     if (this.demo) {
@@ -137,7 +146,10 @@ export class LevelScene extends Phaser.Scene {
         if (ch === ' ') continue;
         if (ch === 'o') {
           const coin = this.coins.create(x * TILE + 8, y * TILE + 8, 'relic');
+          const shiny = (x * 7 + y * 13 + this.levelIndex * 17) % 29 === 0;
           coin.setData('tile', { x, y });
+          coin.setData('shiny', shiny);
+          if (shiny) coin.setTint(0xfff2c0).setScale(1.25);
           this.ignoreUi(coin);
           this.tweens.add({
             targets: coin,
@@ -172,6 +184,8 @@ export class LevelScene extends Phaser.Scene {
     if (ch === 'B' && !this.player.big) return;
     if (ch === 'B') {
       this.addBurst(block.x, block.y, 0xd69249);
+      this.addDust(block.x, block.y);
+      this.revealBrickCache(block, tile);
       block.destroy();
       this.blockSprites.delete(`${tile.x},${tile.y}`);
       sfx('stomp');
@@ -184,6 +198,7 @@ export class LevelScene extends Phaser.Scene {
       duration: 55,
       ease: 'Quad.easeOut',
     });
+    this.addDust(block.x, block.y + 4);
     block.setTexture('tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
     if (ch === '?') {
@@ -219,14 +234,30 @@ export class LevelScene extends Phaser.Scene {
     });
   }
 
-  collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, `+${SCORE.relic}`); coin.destroy(); sfx('coin'); this.addRelic(); }
+  collectRelic(coin) {
+    const shiny = !!coin.getData('shiny');
+    const value = shiny ? SCORE.shinyRelic : SCORE.relic;
+    this.scorePop(coin.x, coin.y - 8, shiny ? `SHINY ${value}` : `+${value}`);
+    this.addSparkle(coin.x, coin.y, shiny ? 0xfff2c0 : 0xffd34d);
+    coin.destroy();
+    sfx(shiny ? 'power' : 'coin');
+    this.addRelic(shiny ? 5 : 1, value);
+  }
   collectItem(item) {
     this.scorePop(item.x, item.y - 10, `${SCORE.item}`);
+    this.addSparkle(item.x, item.y - 10, 0xffd34d);
+    this.addBurst(this.player.sprite.x, this.player.sprite.y - this.player.sprite.displayHeight / 2, 0xffd34d);
     item.destroy(); this.player.grow(); sfx('power'); this.score += SCORE.item; this.updateHud();
+    this.cameras.main.flash(90, 255, 230, 120);
   }
-  addRelic() {
-    this.relics += 1; this.score += SCORE.relic;
-    if (this.relics >= 100) { this.relics -= 100; this.lives += 1; }
+  addRelic(amount = 1, scoreValue = SCORE.relic) {
+    this.relics += amount; this.score += scoreValue;
+    if (this.relics >= 100) {
+      this.relics -= 100;
+      this.lives += 1;
+      sfx('power');
+      this.animateHearts();
+    }
     this.updateHud();
   }
 
@@ -238,6 +269,8 @@ export class LevelScene extends Phaser.Scene {
       this.player.bounce(this.cursors.up.isDown || this.keys.space.isDown);
       sfx(enemy.kind === 'boss' ? 'hurt' : 'stomp');
       this.score += enemy.kind === 'boss' ? 0 : SCORE.enemy;
+      this.cameras.main.shake(enemy.kind === 'boss' ? 180 : 90, enemy.kind === 'boss' ? 0.01 : 0.006);
+      this.addBurst(enemy.x, enemy.y - enemy.displayHeight / 2, enemy.kind === 'boss' ? 0xff6a6a : 0x9adf4a);
       if (enemy.kind !== 'boss') this.scorePop(enemy.x, enemy.y - enemy.displayHeight, `${SCORE.enemy}`);
       this.updateHud();
       return;
@@ -347,8 +380,12 @@ export class LevelScene extends Phaser.Scene {
     this.clearing = true;
     sfx('flag');
     this.score += SCORE.levelComplete;
+    const timeBonus = Math.max(0, this.timeLeft | 0) * 10;
+    this.score += timeBonus;
     this.updateHud();
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
+    if (timeBonus > 0) this.scorePop(this.player.sprite.x, this.player.sprite.y - 44, `TIME ${timeBonus}`);
+    this.showCenterBanner('LEVEL CLEAR!', `TIME BONUS ${timeBonus}`);
     this.time.delayedCall(900, () => {
       if (this.demo) {
         this.scene.start('Cast', { attract: true });
@@ -364,11 +401,21 @@ export class LevelScene extends Phaser.Scene {
     if (this.clearing) return;
     this.clearing = true;
     sfx('win');
-    this.score += SCORE.levelComplete;
+    this.score += SCORE.levelComplete + SCORE.bossDefeat;
+    this.addBurst(this.player.sprite.x, this.player.sprite.y - 26, 0xffd34d);
+    this.scorePop(this.player.sprite.x, this.player.sprite.y - 48, `BOSS ${SCORE.bossDefeat}`);
+    this.showCenterBanner('BIGFOOT CATALOGED!', `BOSS BONUS ${SCORE.bossDefeat}`);
     this.time.delayedCall(500, () => this.scene.start('Win', { who: this.who, score: this.score }));
   }
 
   createHud() {
+    this.hudPanels = [
+      this.add.rectangle(58, 20, 106, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
+      this.add.rectangle(144, 20, 70, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
+      this.add.rectangle(218, 20, 58, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
+      this.add.rectangle(291, 20, 72, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
+      this.add.rectangle(355, 20, 48, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
+    ];
     this.hud = {
       hearts: [],
       score: label(this, '', 10, 18, 10),
@@ -384,6 +431,7 @@ export class LevelScene extends Phaser.Scene {
     };
     for (let i = 0; i < 3; i++) this.hud.hearts.push(this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50));
     this.cameras.main.ignore([
+      ...this.hudPanels,
       ...this.hud.hearts,
       ...Object.values(this.hud).filter((entry) => !Array.isArray(entry)),
     ]);
@@ -400,21 +448,39 @@ export class LevelScene extends Phaser.Scene {
 
   createTouchControls() {
     if (!window.matchMedia?.('(pointer: coarse)').matches) return;
-    const makeButton = (x, y, text, fill, onDown, onUp) => {
-      const circle = this.add.circle(x, y, 18, fill, 0.32)
+    const makeButton = (x, y, text, fill, onDown, onUp, width = 42) => {
+      const button = this.add.rectangle(x, y, width, 36, fill, 0.28)
         .setScrollFactor(0)
         .setDepth(90)
+        .setStrokeStyle(2, fill)
         .setInteractive({ useHandCursor: true });
-      const glyph = label(this, text, x, y - 1, 16).setDepth(91);
-      circle.on('pointerdown', onDown);
-      circle.on('pointerup', onUp);
-      circle.on('pointerout', onUp);
-      this.cameras.main.ignore([circle, glyph]);
-      return [circle, glyph];
+      const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setDepth(91);
+      button.on('pointerdown', onDown);
+      button.on('pointerup', onUp);
+      button.on('pointerout', onUp);
+      this.cameras.main.ignore([button, glyph]);
+      return [button, glyph];
     };
-    makeButton(34, VIEW_H - 28, '<', 0xffffff, () => { this.touch.left = true; }, () => { this.touch.left = false; });
-    makeButton(78, VIEW_H - 28, '>', 0xffffff, () => { this.touch.right = true; }, () => { this.touch.right = false; });
-    makeButton(VIEW_W - 42, VIEW_H - 28, '^', 0xffd34d, () => { this.touch.jump = true; }, () => { this.touch.jump = false; });
+    makeButton(37, VIEW_H - 28, 'LEFT', 0xffffff, () => { this.touch.left = true; }, () => { this.touch.left = false; }, 56);
+    makeButton(100, VIEW_H - 28, 'RIGHT', 0xffffff, () => { this.touch.right = true; }, () => { this.touch.right = false; }, 58);
+    makeButton(VIEW_W - 47, VIEW_H - 28, 'JUMP', 0xffd34d, () => { this.touch.jump = true; }, () => { this.touch.jump = false; }, 64);
+    const hint = label(this, 'TAP BUTTONS TO MOVE', VIEW_W / 2 - 70, VIEW_H - 49, 6).setDepth(91);
+    this.cameras.main.ignore(hint);
+    this.tweens.add({ targets: hint, alpha: 0, delay: 2600, duration: 600, onComplete: () => hint.destroy() });
+  }
+
+  createPauseControls() {
+    this.input.keyboard.on('keydown-P', () => this.togglePauseOverlay());
+    this.input.keyboard.on('keydown-ESC', () => this.togglePauseOverlay());
+    if (!window.matchMedia?.('(pointer: coarse)').matches) return;
+    const button = this.add.rectangle(VIEW_W - 22, 56, 34, 22, 0x101020, 0.62)
+      .setScrollFactor(0)
+      .setDepth(92)
+      .setStrokeStyle(1, 0xffffff)
+      .setInteractive({ useHandCursor: true });
+    const glyph = label(this, 'II', VIEW_W - 27, 51, 8).setDepth(93);
+    button.on('pointerup', () => this.togglePauseOverlay());
+    this.cameras.main.ignore([button, glyph]);
   }
 
   ignoreUi(target) {
@@ -427,11 +493,13 @@ export class LevelScene extends Phaser.Scene {
     this.hud.score.setText(String(this.score).padStart(6, '0'));
     this.hud.relics.setText(`x${String(this.relics).padStart(2, '0')}`);
     this.hud.time.setText(`${Math.max(0, this.timeLeft | 0)}`);
+    this.hud.time.setColor(this.timeLeft <= 60 && Math.floor(this.time.now / 250) % 2 === 0 ? '#ff6a6a' : '#ffffff');
     this.hud.hearts.forEach((h, i) => h.setVisible(i < this.lives));
   }
 
   popRelic(x, y) {
     const relic = this.ignoreUi(this.add.image(x, y, 'relic').setDepth(35));
+    this.addSparkle(x, y, 0xffd34d);
     this.tweens.add({
       targets: relic,
       y: y - 32,
@@ -472,8 +540,127 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
+  addSparkle(x, y, color) {
+    for (let i = 0; i < 5; i++) {
+      const star = this.ignoreUi(this.add.star(x, y, 4, 1, 4, color, 0.9).setDepth(36));
+      this.tweens.add({
+        targets: star,
+        x: x + Phaser.Math.Between(-18, 18),
+        y: y + Phaser.Math.Between(-24, 4),
+        angle: Phaser.Math.Between(-180, 180),
+        scale: 0,
+        alpha: 0,
+        duration: 460,
+        ease: 'Quad.easeOut',
+        onComplete: () => star.destroy(),
+      });
+    }
+  }
+
+  addDust(x, y) {
+    for (let i = 0; i < 5; i++) {
+      const puff = this.ignoreUi(this.add.circle(x + Phaser.Math.Between(-5, 5), y + Phaser.Math.Between(0, 6), 3, 0xd9c6a3, 0.42).setDepth(34));
+      this.tweens.add({
+        targets: puff,
+        x: puff.x + Phaser.Math.Between(-10, 10),
+        y: puff.y + Phaser.Math.Between(-10, 1),
+        scale: 1.8,
+        alpha: 0,
+        duration: 420,
+        ease: 'Quad.easeOut',
+        onComplete: () => puff.destroy(),
+      });
+    }
+  }
+
+  revealBrickCache(block, tile) {
+    if ((tile.x + this.levelIndex * 5) % 6 !== 0) return;
+    const x = block.x;
+    const y = block.y;
+    this.score += SCORE.brickCache;
+    this.scorePop(x, y - 12, `CACHE ${SCORE.brickCache}`);
+    for (let i = 0; i < 3; i++) {
+      this.time.delayedCall(i * 90, () => {
+        this.addRelic(1, 0);
+        this.popRelic(x + (i - 1) * 7, y - TILE);
+      });
+    }
+  }
+
+  animateHearts() {
+    if (!this.hud?.hearts) return;
+    this.tweens.add({
+      targets: this.hud.hearts,
+      scale: 1.35,
+      duration: 120,
+      yoyo: true,
+      repeat: 2,
+      ease: 'Sine.easeInOut',
+    });
+  }
+
+  showCenterBanner(title, subtitle) {
+    const elements = [
+      this.add.rectangle(VIEW_W / 2, 92, 194, 44, 0x101020, 0.76).setScrollFactor(0).setDepth(96).setStrokeStyle(2, 0xffd34d),
+      label(this, title, VIEW_W / 2 - 72, 78, 11).setDepth(97),
+      label(this, subtitle, VIEW_W / 2 - 70, 98, 7).setDepth(97),
+    ];
+    this.cameras.main.ignore(elements);
+    this.tweens.add({ targets: elements, alpha: 0, delay: 760, duration: 300, onComplete: () => elements.forEach((e) => e.destroy()) });
+  }
+
+  showLevelIntro() {
+    const elements = [
+      this.add.rectangle(VIEW_W / 2, 87, 230, 58, 0x101020, 0.78).setScrollFactor(0).setDepth(94).setStrokeStyle(2, 0xd9f3ff),
+      label(this, `WORLD 1-${this.levelIndex + 1}`, VIEW_W / 2 - 48, 66, 13).setDepth(95),
+      label(this, this.level.name, VIEW_W / 2 - 66, 88, 9).setDepth(95),
+      label(this, `${this.who.toUpperCase()} VS THE CRYPTIDS`, VIEW_W / 2 - 88, 108, 6).setDepth(95),
+    ];
+    this.cameras.main.ignore(elements);
+    this.tweens.add({ targets: elements, alpha: 0, delay: 1200, duration: 360, onComplete: () => elements.forEach((e) => e.destroy()) });
+  }
+
+  togglePauseOverlay() {
+    if (this.dying || this.clearing) return;
+    if (this.pausedByOverlay) {
+      this.closePauseOverlay();
+      return;
+    }
+    this.pausedByOverlay = true;
+    this.physics.world.pause();
+    const overlay = [
+      this.add.rectangle(VIEW_W / 2, VIEW_H / 2, 250, 142, 0x101020, 0.88).setScrollFactor(0).setDepth(120).setStrokeStyle(2, 0xffd34d),
+      label(this, 'PAUSED', VIEW_W / 2 - 38, 62, 16).setDepth(121),
+      label(this, 'ARROWS / BUTTONS MOVE', VIEW_W / 2 - 78, 91, 7).setDepth(121),
+      label(this, 'UP / SPACE / JUMP HOPS', VIEW_W / 2 - 86, 106, 7).setDepth(121),
+    ];
+    const resume = this.pauseButton('RESUME', VIEW_W / 2 - 62, 136, () => this.closePauseOverlay());
+    const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score }));
+    const title = this.pauseButton('TITLE', VIEW_W / 2 + 64, 136, () => this.scene.start('Title'));
+    this.pauseOverlay = [...overlay, ...resume, ...restart, ...title];
+    this.cameras.main.ignore(this.pauseOverlay);
+  }
+
+  pauseButton(text, x, y, onTap) {
+    const button = this.add.rectangle(x, y, 58, 22, 0x203050, 0.9)
+      .setScrollFactor(0)
+      .setDepth(122)
+      .setStrokeStyle(1, 0xffffff)
+      .setInteractive({ useHandCursor: true });
+    const caption = label(this, text, x - 21, y - 5, 6).setDepth(123);
+    button.on('pointerup', onTap);
+    return [button, caption];
+  }
+
+  closePauseOverlay() {
+    this.pausedByOverlay = false;
+    this.physics.world.resume();
+    this.pauseOverlay?.forEach((entry) => entry.destroy());
+    this.pauseOverlay = null;
+  }
+
   update(time) {
-    if (!this.player || this.dying || this.clearing) return;
+    if (!this.player || this.dying || this.clearing || this.pausedByOverlay) return;
     if (this.demo && time - (this.demoStartedAt || 0) > 28000) {
       this.endDemo();
       return;

@@ -29,7 +29,10 @@ export const PHYSICS = {
 
 export const SCORE = {
   relic: 100,
+  shinyRelic: 500,
+  brickCache: 300,
   enemy: 200,
   item: 1000,
   levelComplete: 1000,
+  bossDefeat: 3000,
 };

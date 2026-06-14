@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { HERO_DISPLAY, PHYSICS, TILE, VIEW_H } from '../data/constants.js';
 import { sfx } from '../systems/sfx.js';
+import { rememberBase } from '../ui/animationUi.js';
 
 export class Player {
   constructor(scene, who, x, y) {
@@ -14,6 +15,11 @@ export class Player {
     this.setHeroDisplay(false);
     this.setBody(13, 25);
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
+    this.wasGrounded = true;
+    this.visualPhase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    this.squashStart = 0;
+    this.squashDuration = 0;
+    this.squashAmount = 0;
   }
 
   aspect() {
@@ -24,6 +30,9 @@ export class Player {
   setHeroDisplay(big) {
     const height = big ? HERO_DISPLAY.powered : HERO_DISPLAY.gameplay;
     this.sprite.setDisplaySize(Math.round(height * this.aspect()), height);
+    this.sprite.setData('__baseScaleX', Math.abs(this.sprite.scaleX));
+    this.sprite.setData('__baseScaleY', Math.abs(this.sprite.scaleY));
+    rememberBase(this.sprite);
   }
 
   setBody(displayW, displayH) {
@@ -76,15 +85,61 @@ export class Player {
       body.setVelocityX(0);
     }
 
-    if (jumpPressed && (body.blocked.down || body.touching.down)) {
+    const grounded = body.blocked.down || body.touching.down;
+    if (jumpPressed && grounded) {
       body.setVelocityY(PHYSICS.jumpVelocity);
+      this.triggerSquash(0.08, 120);
       sfx('jump');
     }
 
     this.sprite.setAlpha(this.scene.time.now < this.invulnUntil && Math.floor(this.scene.time.now / 80) % 2 === 0 ? 0.35 : 1);
-    if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer();
+    this.animateVisual(body, grounded, left || right);
+    if (grounded && !this.wasGrounded) this.triggerSquash(0.12, 110);
+    this.wasGrounded = grounded;
+    if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer('fall');
   }
 
   bounce() { this.sprite.setVelocityY(PHYSICS.stompBounce); }
   get foot() { return this.sprite.y; }
+
+  animateVisual(body, grounded, moving) {
+    const baseScaleX = this.sprite.getData('__baseScaleX') || Math.abs(this.sprite.scaleX);
+    const baseScaleY = this.sprite.getData('__baseScaleY') || Math.abs(this.sprite.scaleY);
+    this.sprite.setData('__baseScaleX', baseScaleX);
+    this.sprite.setData('__baseScaleY', baseScaleY);
+    const time = this.scene.time.now;
+    let scaleX = baseScaleX;
+    let scaleY = baseScaleY;
+    let angle = 0;
+
+    if (!grounded) {
+      scaleX *= 0.96;
+      scaleY *= 1.04;
+      angle = body.velocity.y < 0 ? (this.sprite.flipX ? -2 : 2) : (this.sprite.flipX ? 3 : -3);
+    } else if (moving) {
+      const stride = Math.sin(time / 70 + this.visualPhase);
+      scaleX *= 1 + Math.abs(stride) * 0.035;
+      scaleY *= 1 - Math.abs(stride) * 0.025;
+      angle = (this.sprite.flipX ? -1 : 1) * stride * 1.8;
+    } else {
+      const idle = Math.sin(time / 430 + this.visualPhase);
+      scaleY *= 1 + idle * 0.012;
+    }
+
+    if (this.squashDuration > 0) {
+      const t = Phaser.Math.Clamp((time - this.squashStart) / this.squashDuration, 0, 1);
+      const strength = (1 - t) * this.squashAmount;
+      scaleX *= 1 + strength;
+      scaleY *= 1 - strength;
+    }
+
+    this.sprite.setScale(scaleX, scaleY);
+    this.sprite.setAngle(angle);
+  }
+
+  triggerSquash(amount, duration) {
+    this.squashStart = this.scene.time.now;
+    this.squashDuration = duration;
+    this.squashAmount = amount;
+  }
 }

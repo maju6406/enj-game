@@ -40,6 +40,27 @@ const canvas = document.getElementById('game');
 const gameWrap = document.getElementById('game-wrap');
 const fullscreenButton = document.getElementById('fullscreen-button');
 
+function resizeCanvasToCrispScale() {
+  if (!canvas) return;
+  const fullscreen = document.fullscreenElement === gameWrap || document.fullscreenElement === canvas;
+  const chromeHeight = fullscreen ? 0 : 90;
+  const availableW = Math.max(1, window.innerWidth - (fullscreen ? 0 : 28));
+  const availableH = Math.max(1, window.innerHeight - chromeHeight);
+  const integerScale = Math.floor(Math.min(availableW / VIEW_W, availableH / VIEW_H));
+  if (integerScale >= 1) {
+    canvas.style.width = `${VIEW_W * integerScale}px`;
+    canvas.style.height = `${VIEW_H * integerScale}px`;
+    return;
+  }
+  const fitScale = Math.min(availableW / VIEW_W, availableH / VIEW_H);
+  canvas.style.width = `${Math.floor(VIEW_W * fitScale)}px`;
+  canvas.style.height = `${Math.floor(VIEW_H * fitScale)}px`;
+}
+
+resizeCanvasToCrispScale();
+window.addEventListener('resize', resizeCanvasToCrispScale);
+document.addEventListener('fullscreenchange', resizeCanvasToCrispScale);
+
 async function toggleFullscreen() {
   if (document.fullscreenElement) {
     await document.exitFullscreen();

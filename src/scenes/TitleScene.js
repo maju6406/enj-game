@@ -127,18 +127,16 @@ export class CryptidsScene extends Phaser.Scene {
     text(this, 'CRYPTID FIELD GUIDE', VIEW_W / 2, 18, 13, '#ffd34d');
 
     const cryptids = [
-      ['enemy-grunt', 'GRUNT', 'HABITAT: ROADS', 'TRICK: MARCHES', 105, 75, 78, 30],
-      ['enemy-chupacabra', 'CHUPA', 'HABITAT: CAVES', 'TRICK: SHELL', 279, 75, 78, 30],
-      ['enemy-mothman', 'MOTHMAN', 'HABITAT: SKIES', 'TRICK: SWOOPS', 105, 157, 158, 34],
-      ['enemy-boss', 'BIGFOOT', 'HABITAT: KEEP', 'TRICK: STOMPS', 279, 157, 158, 40],
+      ['enemy-grunt', 'GRUNT', 105, 75, 78, 32],
+      ['enemy-chupacabra', 'CHUPA', 279, 75, 78, 32],
+      ['enemy-mothman', 'MOTHMAN', 105, 157, 158, 36],
+      ['enemy-boss', 'BIGFOOT', 279, 157, 158, 43],
     ];
 
-    for (const [key, name, stat, trick, x, cardY, footY, height] of cryptids) {
+    for (const [key, name, x, cardY, footY, height] of cryptids) {
       menuPanel(this, x, cardY, 126, 70);
-      const img = sprite(this, key, x, footY - 8, height);
-      text(this, name, x, cardY + 11, name.length > 6 ? 7 : 8, '#ffffff');
-      text(this, stat, x, cardY + 25, 6, '#fff2c0');
-      text(this, trick, x, cardY + 37, 6, '#b9e6ff');
+      const img = sprite(this, key, x, footY - 6, height);
+      text(this, name, x, cardY + 24, name.length > 6 ? 7 : 8, '#ffffff');
       this.tweens.add({ targets: img, y: '-=2', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
@@ -173,18 +171,18 @@ export class PowerupsScene extends Phaser.Scene {
     text(this, 'POWER UPS', VIEW_W / 2, 18, 18, '#ffd34d');
 
     const powerups = [
-      ['tile-question', 'POWER BLOCK', 'BUMP FOR SURPRISES', 105, 75, 38],
-      ['journal', 'JOURNAL', 'GROW AND TAKE A HIT', 279, 75, 34],
-      ['relic', 'RELIC', '100 EARNS A LIFE', 105, 157, 30],
-      ['heart', 'LIFE HEART', 'TRACKS 3 CHANCES', 279, 157, 28],
+      ['tile-question', 'POWER BLOCK', 'BUMP FOR SURPRISES', 105, 76, 34],
+      ['journal', 'JOURNAL', 'GROW AND TAKE A HIT', 279, 76, 32],
+      ['relic', 'RELIC', '100 EARNS A LIFE', 105, 157, 28],
+      ['heart', 'LIFE HEART', 'TRACKS 3 CHANCES', 279, 157, 26],
     ];
 
     for (const [key, name, desc, x, cardY, height] of powerups) {
-      menuPanel(this, x, cardY, 126, 70);
-      const img = sprite(this, key, x, cardY + 3, height);
-      text(this, name, x, cardY + 24, name.length > 8 ? 6 : 8, '#ffffff');
-      text(this, desc, x, cardY + 39, 6, '#fff2c0');
-      this.tweens.add({ targets: img, y: '-=4', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      menuPanel(this, x, cardY, 126, 74);
+      const img = sprite(this, key, x, cardY + 4, height);
+      text(this, name, x, cardY + 21, name.length > 8 ? 6 : 8, '#ffffff');
+      text(this, desc, x, cardY + 34, 6, '#fff2c0');
+      this.tweens.add({ targets: img, y: '-=2', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
     menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);

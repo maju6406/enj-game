@@ -1,6 +1,7 @@
 import * as Phaser from 'phaser';
 import { HERO_DISPLAY, VIEW_H, VIEW_W } from '../data/constants.js';
 import { sfx, unlockSfx } from '../systems/sfx.js';
+import { loopBob, loopPulse, loopWobble, rememberBase } from '../ui/animationUi.js';
 import { menuPanel, menuPrompt, menuText as text, pulse, tapRipple, tapZone } from '../ui/menuUi.js';
 
 function hero(scene, who, x, footY, height, flip = false) {
@@ -33,8 +34,11 @@ export class TitleScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
-    hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);
-    hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true);
+    const jack = hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);
+    const evee = hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true);
+    loopBob(this, jack, 3, 920);
+    loopBob(this, evee, 3, 940, { delay: 180 });
+    loopWobble(this, [jack, evee], 1.5, 1180);
     const logo = [
       text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d'),
       text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a'),
@@ -95,6 +99,8 @@ export class CastScene extends Phaser.Scene {
     text(this, 'BRAVE EXPLORER', 119, 199, 6, '#fff2c0');
     text(this, 'CRYPTID SLEUTH', 265, 199, 6, '#fff2c0');
     pulse(this, [jack, evee], 1.03, 720);
+    loopWobble(this, jack, 1.2, 920);
+    loopWobble(this, evee, -1.2, 880);
 
     menuPrompt(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8);
 
@@ -137,7 +143,9 @@ export class CryptidsScene extends Phaser.Scene {
       menuPanel(this, x, cardY, 126, 70);
       const img = sprite(this, key, x, cardY + 12, height);
       text(this, name, x, cardY + 24, name.length > 6 ? 7 : 8, '#ffffff');
-      this.tweens.add({ targets: img, y: '-=1', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      loopBob(this, img, key === 'enemy-mothman' ? 2 : 1, key === 'enemy-chupacabra' ? 420 : 760, { delay: x });
+      loopWobble(this, img, key === 'enemy-boss' ? 1 : 2, key === 'enemy-chupacabra' ? 360 : 840, { delay: cardY });
+      if (key === 'enemy-mothman') loopPulse(this, img, 1.04, 320);
     }
 
     menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
@@ -182,7 +190,9 @@ export class PowerupsScene extends Phaser.Scene {
       const img = sprite(this, key, x, cardY + 4, height);
       text(this, name, x, cardY + 21, name.length > 8 ? 6 : 8, '#ffffff');
       text(this, desc, x, cardY + 30, 6, '#fff2c0');
-      this.tweens.add({ targets: img, y: '-=2', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      loopBob(this, img, 2, key === 'relic' ? 520 : 680, { delay: x });
+      loopPulse(this, img, key === 'heart' ? 1.12 : 1.06, key === 'tile-question' ? 520 : 740);
+      if (key === 'relic' || key === 'journal') loopWobble(this, img, 5, key === 'relic' ? 460 : 620);
     }
 
     menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
@@ -219,6 +229,11 @@ export class SelectScene extends Phaser.Scene {
       hero(this, 'jack', 112, 143, HERO_DISPLAY.select),
       hero(this, 'evee', 272, 143, HERO_DISPLAY.select),
     ];
+    this.heroSprites.forEach((entry, i) => {
+      rememberBase(entry);
+      loopBob(this, entry, i === 0 ? 2 : 3, i === 0 ? 720 : 680, { delay: i * 120 });
+      loopWobble(this, entry, i === 0 ? 1.2 : -1.2, i === 0 ? 840 : 780);
+    });
     text(this, 'JACK', 112, 171, 13, '#ffffff');
     text(this, 'EVEE', 272, 171, 13, '#ffffff');
     text(this, 'BRAVE EXPLORER', 112, 190, 6, '#fff2c0');
@@ -243,8 +258,6 @@ export class SelectScene extends Phaser.Scene {
     this.cards[1].setStrokeStyle(2, i === 1 ? 0xffffff : 0x505060);
     this.cards[0].setScale(i === 0 ? 1.04 : 1);
     this.cards[1].setScale(i === 1 ? 1.04 : 1);
-    this.heroSprites[0].setScale(Math.abs(this.heroSprites[0].scaleX), this.heroSprites[0].scaleY);
-    this.heroSprites[1].setScale(Math.abs(this.heroSprites[1].scaleX), this.heroSprites[1].scaleY);
     this.heroSprites[0].setTint(i === 0 ? 0xffffff : 0xb9b9d6);
     this.heroSprites[1].setTint(i === 1 ? 0xffffff : 0xb9b9d6);
   }
@@ -281,8 +294,11 @@ export class WinScene extends Phaser.Scene {
   create(data) {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
-    hero(this, data.who || 'jack', 154, VIEW_H - 40, HERO_DISPLAY.win);
-    hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, HERO_DISPLAY.win, true);
+    const winner = hero(this, data.who || 'jack', 154, VIEW_H - 40, HERO_DISPLAY.win);
+    const pal = hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, HERO_DISPLAY.win, true);
+    loopBob(this, winner, 4, 520);
+    loopBob(this, pal, 3, 620, { delay: 140 });
+    loopWobble(this, [winner, pal], 2, 700);
     text(this, 'CRYPTIDS CATALOGED!', VIEW_W / 2, 54, 18, '#ffe060');
     text(this, `FINAL SCORE ${data.score || 0}`, VIEW_W / 2, 96, 12, '#ffffff');
     text(this, 'PRESS ENTER', VIEW_W / 2, 168, 14, '#ffffff');

@@ -4,6 +4,7 @@ import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
 import { sfx } from '../systems/sfx.js';
+import { flashTint, loopPulse, loopShimmer, loopWobble, rememberBase } from '../ui/animationUi.js';
 import { uiTextStyle } from '../ui/textStyle.js';
 
 const TILE_KEY = {
@@ -160,7 +161,16 @@ export class LevelScene extends Phaser.Scene {
           this.tweens.add({
             targets: coin,
             y: coin.y - 4,
+            angle: shiny ? 8 : 5,
             duration: 650,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+          });
+          this.tweens.add({
+            targets: coin,
+            scaleX: coin.scaleX * (shiny ? 1.14 : 1.06),
+            duration: shiny ? 420 : 760,
             yoyo: true,
             repeat: -1,
             ease: 'Sine.easeInOut',
@@ -169,11 +179,45 @@ export class LevelScene extends Phaser.Scene {
           const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch] || 'tile-block'));
           s.setData('tile', { x, y, ch });
           this.blockSprites.set(`${x},${y}`, s);
+          this.animateBlockAmbient(s, ch, x, y);
         } else if (HAZARD.has(ch)) {
-          this.ignoreUi(this.hazards.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch]));
+          const hazard = this.ignoreUi(this.hazards.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch]));
+          this.animateHazard(hazard, ch, x);
         }
       }
     }
+  }
+
+  animateBlockAmbient(block, ch, x, y) {
+    rememberBase(block);
+    if (ch === '?' || ch === 'U') {
+      loopShimmer(this, block, 0.74, 720, { delay: (x + y) * 17 });
+      loopWobble(this, block, 0.7, 860, { delay: x * 9 });
+    } else if (ch === 'B') {
+      this.tweens.add({
+        targets: block,
+        alpha: 0.88,
+        duration: 1200 + ((x + y) % 5) * 90,
+        yoyo: true,
+        repeat: -1,
+        ease: 'Sine.easeInOut',
+      });
+    } else if (ch === '=') {
+      loopShimmer(this, block, 0.86, 1400, { delay: x * 11 });
+    }
+  }
+
+  animateHazard(hazard, ch, x) {
+    this.tweens.add({
+      targets: hazard,
+      alpha: ch === 'v' ? 0.68 : 0.82,
+      duration: ch === 'v' ? 360 : 820,
+      delay: (x % 4) * 45,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    if (ch === 'v') loopWobble(this, hazard, 1.2, 420, { delay: (x % 3) * 40 });
   }
 
   handleBlockBump(block) {
@@ -189,6 +233,8 @@ export class LevelScene extends Phaser.Scene {
     if (!['?', 'U', 'B'].includes(ch)) return;
     if (ch === 'B' && !this.player.big) return;
     if (ch === 'B') {
+      this.tweens.killTweensOf(block);
+      flashTint(this, block, 0xffdca0, 80);
       this.addBurst(block.x, block.y, 0xd69249);
       this.addDust(block.x, block.y);
       this.revealBrickCache(block, tile);
@@ -197,6 +243,8 @@ export class LevelScene extends Phaser.Scene {
       sfx('stomp');
       return;
     }
+    this.tweens.killTweensOf(block);
+    block.setAlpha(1).setAngle(0).setScale(1);
     this.tweens.add({
       targets: block,
       y: block.y - 3,
@@ -207,6 +255,15 @@ export class LevelScene extends Phaser.Scene {
     this.addDust(block.x, block.y + 4);
     block.setTexture('tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
+    flashTint(this, block, 0xfff2c0, 80);
+    this.tweens.add({
+      targets: block,
+      scaleX: 1.08,
+      scaleY: 0.92,
+      duration: 70,
+      yoyo: true,
+      ease: 'Back.easeOut',
+    });
     if (ch === '?') {
       sfx('coin');
       this.addRelic();
@@ -236,6 +293,32 @@ export class LevelScene extends Phaser.Scene {
         item.body.allowGravity = true;
         item.body.checkCollision.none = false;
         item.setVelocityX(PHYSICS.powerupSpeed);
+        this.animatePowerUpItem(item);
+      },
+    });
+  }
+
+  animatePowerUpItem(item) {
+    rememberBase(item);
+    this.tweens.add({
+      targets: item,
+      angle: 5,
+      scaleX: item.scaleX * 1.08,
+      scaleY: item.scaleY * 0.95,
+      duration: 360,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+    const sparkleEvent = this.time.addEvent({
+      delay: 520,
+      loop: true,
+      callback: () => {
+        if (!item.active) {
+          sparkleEvent.remove(false);
+          return;
+        }
+        this.addSparkle(item.x, item.y - 8, 0xbff5ff);
       },
     });
   }
@@ -295,10 +378,20 @@ export class LevelScene extends Phaser.Scene {
     const target = shell === a ? b : shell === b ? a : null;
     if (!shell || !target || target.kind === 'boss') return;
     target.dead = true;
-    target.disableBody(true, true);
+    target.disableBody(true, false);
     this.score += SCORE.enemy;
     this.scorePop(target.x, target.y - target.displayHeight, `${SCORE.enemy}`);
     this.addBurst(target.x, target.y - target.displayHeight / 2, 0x9adf4a);
+    this.tweens.add({
+      targets: target,
+      scaleX: target.scaleX * 1.2,
+      scaleY: target.scaleY * 0.2,
+      alpha: 0,
+      angle: target.angle + 140,
+      duration: 180,
+      ease: 'Quad.easeIn',
+      onComplete: () => target.destroy(),
+    });
     sfx('stomp');
     this.updateHud();
   }
@@ -497,7 +590,11 @@ export class LevelScene extends Phaser.Scene {
       livesLabel: label(this, 'LIVES', 254, 6, 8),
       timeLabel: label(this, 'TIME', 322, 6, 8),
     };
-    for (let i = 0; i < 3; i++) this.hud.hearts.push(this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50));
+    for (let i = 0; i < 3; i++) {
+      const heart = this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50);
+      loopPulse(this, heart, 1.08, 780, { delay: i * 90 });
+      this.hud.hearts.push(heart);
+    }
     this.cameras.main.ignore([
       ...this.hudPanels,
       ...this.hud.hearts,

@@ -48,6 +48,8 @@ export class LevelScene extends Phaser.Scene {
     this.items = this.physics.add.group({ allowGravity: false });
     this.enemies = this.physics.add.group();
     this.blockSprites = new Map();
+    this.touch = { left: false, right: false, jump: false };
+    this.addDecorations();
     this.buildWorld();
 
     this.player = new Player(this, this.who, this.level.start.x + 8, this.level.start.y + 20);
@@ -77,6 +79,7 @@ export class LevelScene extends Phaser.Scene {
     this.uiCamera = this.cameras.add(0, 0, VIEW_W, VIEW_H).setScroll(0, 0).setZoom(1);
     this.uiCamera.ignore(this.children.list);
     this.createHud();
+    this.createTouchControls();
     this.timeLeft = this.level.time;
     this.timerEvent = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
       this.timeLeft -= 1; if (this.timeLeft <= 0) this.killPlayer();
@@ -85,6 +88,31 @@ export class LevelScene extends Phaser.Scene {
 
   bgColor() {
     return this.level.theme === 'underground' ? '#101020' : this.level.theme === 'castle' ? '#181420' : '#5c94fc';
+  }
+
+  addDecorations() {
+    if (this.level.theme === 'underground' || this.level.theme === 'castle') return;
+    const width = this.level.width * TILE;
+    for (let x = 40; x < width; x += 280) {
+      this.add.image(x, Phaser.Math.Between(30, 84), 'scenery-cloud')
+        .setScrollFactor(0.18)
+        .setAlpha(0.85)
+        .setDepth(-20)
+        .setScale(Phaser.Math.FloatBetween(0.8, 1.25));
+    }
+    for (let x = 120; x < width; x += 420) {
+      this.add.image(x, VIEW_H - 48, 'scenery-hills')
+        .setOrigin(0.5, 1)
+        .setScrollFactor(0.35)
+        .setDepth(-15)
+        .setScale(Phaser.Math.FloatBetween(1, 1.6));
+    }
+    for (let x = 80; x < width; x += 210) {
+      this.add.image(x, VIEW_H - 32, 'scenery-bush')
+        .setOrigin(0.5, 1)
+        .setScrollFactor(0.65)
+        .setDepth(-10);
+    }
   }
 
   buildWorld() {
@@ -96,12 +124,21 @@ export class LevelScene extends Phaser.Scene {
         if (ch === 'o') {
           const coin = this.coins.create(x * TILE + 8, y * TILE + 8, 'relic');
           coin.setData('tile', { x, y });
+          this.ignoreUi(coin);
+          this.tweens.add({
+            targets: coin,
+            y: coin.y - 4,
+            duration: 650,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+          });
         } else if (SOLID.has(ch)) {
-          const s = this.solids.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch] || 'tile-block');
+          const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch] || 'tile-block'));
           s.setData('tile', { x, y, ch });
           this.blockSprites.set(`${x},${y}`, s);
         } else if (HAZARD.has(ch)) {
-          this.hazards.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch]);
+          this.ignoreUi(this.hazards.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch]));
         }
       }
     }
@@ -120,6 +157,7 @@ export class LevelScene extends Phaser.Scene {
     if (!['?', 'U', 'B'].includes(ch)) return;
     if (ch === 'B' && !this.player.big) return;
     if (ch === 'B') {
+      this.addBurst(block.x, block.y, 0xd69249);
       block.destroy();
       this.blockSprites.delete(`${tile.x},${tile.y}`);
       sfx('stomp');
@@ -134,7 +172,12 @@ export class LevelScene extends Phaser.Scene {
     });
     block.setTexture('tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
-    if (ch === '?') { sfx('coin'); this.addRelic(50); this.scorePop(block.x, block.y - 10, '+50'); }
+    if (ch === '?') {
+      sfx('coin');
+      this.addRelic(50);
+      this.popRelic(block.x, block.y - TILE);
+      this.scorePop(block.x, block.y - 10, '+50');
+    }
     if (ch === 'U') {
       sfx('power');
       this.ignoreUi(this.items.create(tile.x * TILE + 8, tile.y * TILE - 8, 'journal'));
@@ -209,6 +252,7 @@ export class LevelScene extends Phaser.Scene {
     sfx('flag');
     this.score += this.timeLeft * 10;
     this.updateHud();
+    this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     this.time.delayedCall(900, () => {
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
@@ -226,20 +270,43 @@ export class LevelScene extends Phaser.Scene {
 
   createHud() {
     this.hud = {
-      hearts: [], score: label(this, '', 10, 8), relics: label(this, '', 94, 8),
-      world: label(this, `WORLD 1-${this.levelIndex + 1}`, 190, 8), time: label(this, '', 310, 8),
-      name: label(this, this.level.name, 10, 24, 9),
+      hearts: [],
+      score: label(this, '', 10, 18, 10),
+      relics: label(this, '', 98, 18, 10),
+      world: label(this, `1-${this.levelIndex + 1}`, 190, 18, 10),
+      time: label(this, '', 322, 18, 10),
+      name: label(this, this.level.name, 10, 34, 9),
+      scoreLabel: label(this, 'SCORE', 10, 6, 8),
+      relicLabel: label(this, 'RELICS', 98, 6, 8),
+      worldLabel: label(this, 'WORLD', 190, 6, 8),
+      livesLabel: label(this, 'LIVES', 254, 6, 8),
+      timeLabel: label(this, 'TIME', 322, 6, 8),
     };
-    for (let i = 0; i < 3; i++) this.hud.hearts.push(this.add.image(70 + i * 12, 15, 'heart').setScrollFactor(0).setDepth(50));
+    for (let i = 0; i < 3; i++) this.hud.hearts.push(this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50));
     this.cameras.main.ignore([
       ...this.hud.hearts,
-      this.hud.score,
-      this.hud.relics,
-      this.hud.world,
-      this.hud.time,
-      this.hud.name,
+      ...Object.values(this.hud).filter((entry) => !Array.isArray(entry)),
     ]);
     this.updateHud();
+  }
+
+  createTouchControls() {
+    if (!window.matchMedia?.('(pointer: coarse)').matches) return;
+    const makeButton = (x, y, text, fill, onDown, onUp) => {
+      const circle = this.add.circle(x, y, 18, fill, 0.32)
+        .setScrollFactor(0)
+        .setDepth(90)
+        .setInteractive({ useHandCursor: true });
+      const glyph = label(this, text, x, y - 1, 16).setDepth(91);
+      circle.on('pointerdown', onDown);
+      circle.on('pointerup', onUp);
+      circle.on('pointerout', onUp);
+      this.cameras.main.ignore([circle, glyph]);
+      return [circle, glyph];
+    };
+    makeButton(34, VIEW_H - 28, '<', 0xffffff, () => { this.touch.left = true; }, () => { this.touch.left = false; });
+    makeButton(78, VIEW_H - 28, '>', 0xffffff, () => { this.touch.right = true; }, () => { this.touch.right = false; });
+    makeButton(VIEW_W - 42, VIEW_H - 28, '^', 0xffd34d, () => { this.touch.jump = true; }, () => { this.touch.jump = false; });
   }
 
   ignoreUi(target) {
@@ -250,9 +317,21 @@ export class LevelScene extends Phaser.Scene {
   updateHud() {
     if (!this.hud) return;
     this.hud.score.setText(String(this.score).padStart(6, '0'));
-    this.hud.relics.setText(`RELIC ${String(this.relics).padStart(2, '0')}`);
-    this.hud.time.setText(`TIME ${Math.max(0, this.timeLeft | 0)}`);
+    this.hud.relics.setText(`x${String(this.relics).padStart(2, '0')}`);
+    this.hud.time.setText(`${Math.max(0, this.timeLeft | 0)}`);
     this.hud.hearts.forEach((h, i) => h.setVisible(i < this.lives));
+  }
+
+  popRelic(x, y) {
+    const relic = this.ignoreUi(this.add.image(x, y, 'relic').setDepth(35));
+    this.tweens.add({
+      targets: relic,
+      y: y - 32,
+      alpha: 0,
+      duration: 520,
+      ease: 'Quad.easeOut',
+      onComplete: () => relic.destroy(),
+    });
   }
 
   scorePop(x, y, value) {
@@ -290,7 +369,7 @@ export class LevelScene extends Phaser.Scene {
 
   update(time) {
     if (!this.player || this.dying || this.clearing) return;
-    this.player.update(this.cursors, this.keys);
+    this.player.update(this.cursors, this.keys, this.touch);
     this.enemies.children.each((e) => {
       if (e.y > VIEW_H + 96) {
         e.destroy();

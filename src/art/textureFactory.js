@@ -114,6 +114,34 @@ function hud(scene) {
   add(scene, 'heart', heart);
 }
 
+function scenery(scene) {
+  let c, ctx;
+
+  [c, ctx] = canvas(48, 22);
+  rect(ctx, 8, 10, 30, 8, '#ffffff');
+  rect(ctx, 14, 5, 12, 8, '#ffffff');
+  rect(ctx, 25, 7, 12, 9, '#ffffff');
+  rect(ctx, 2, 14, 42, 5, '#d9f3ff');
+  rect(ctx, 10, 18, 24, 2, '#9bc8f0');
+  add(scene, 'scenery-cloud', c);
+
+  [c, ctx] = canvas(72, 36);
+  ctx.fillStyle = '#4c9f44';
+  ctx.beginPath();
+  ctx.moveTo(0, 36); ctx.lineTo(18, 10); ctx.lineTo(36, 30); ctx.lineTo(54, 6); ctx.lineTo(72, 36);
+  ctx.closePath(); ctx.fill();
+  rect(ctx, 17, 14, 3, 3, '#2d6c2d');
+  rect(ctx, 53, 10, 3, 3, '#2d6c2d');
+  add(scene, 'scenery-hills', c);
+
+  [c, ctx] = canvas(42, 18);
+  rect(ctx, 2, 10, 38, 6, '#1d6b2c');
+  rect(ctx, 7, 5, 12, 10, '#2ea043');
+  rect(ctx, 18, 3, 14, 12, '#34b455');
+  rect(ctx, 30, 7, 8, 8, '#2ea043');
+  add(scene, 'scenery-bush', c);
+}
+
 export function fallbackHeroTextures(scene) {
   const make = (key, hair, outfit) => {
     const [c, ctx] = canvas(18, 32);
@@ -141,7 +169,7 @@ export function generateTextures(scene) {
   tile(scene, 'tile-stone', '#56586b', '#9ca0b8', '#202231');
   hazard(scene, 'tile-spikes', '#e5e8ef');
   hazard(scene, 'tile-lava', '#ff5a1f');
-  coin(scene); journal(scene); enemies(scene); hud(scene);
+  coin(scene); journal(scene); enemies(scene); hud(scene); scenery(scene);
 }
 
 export function extractHeroTextures(scene) {

@@ -59,12 +59,14 @@ export class Player {
     return true;
   }
 
-  update(cursors, keys) {
+  update(cursors, keys, touch = {}) {
     const body = this.sprite.body;
-    const left = cursors.left.isDown;
-    const right = cursors.right.isDown;
-    const jumpDown = cursors.up.isDown || keys.space.isDown;
-    const jumpPressed = Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(keys.space);
+    const left = cursors.left.isDown || touch.left;
+    const right = cursors.right.isDown || touch.right;
+    const jumpDown = cursors.up.isDown || keys.space.isDown || touch.jump;
+    const touchJumpPressed = touch.jump && !this.touchJumpWasDown;
+    const jumpPressed = Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(keys.space) || touchJumpPressed;
+    this.touchJumpWasDown = touch.jump;
 
     if (left) { body.setAccelerationX(-PHYSICS.runAccel * 10); this.sprite.setFlipX(true); }
     else if (right) { body.setAccelerationX(PHYSICS.runAccel * 10); this.sprite.setFlipX(false); }

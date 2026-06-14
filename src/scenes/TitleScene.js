@@ -16,6 +16,14 @@ function hero(scene, who, x, footY, height, flip = false) {
     .setFlipX(flip);
 }
 
+function sprite(scene, key, x, footY, height, flip = false) {
+  const img = scene.textures.get(key).getSourceImage();
+  return scene.add.image(x, footY, key)
+    .setOrigin(0.5, 1)
+    .setDisplaySize(Math.round(height * (img.width / img.height)), height)
+    .setFlipX(flip);
+}
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
@@ -29,10 +37,51 @@ export class TitleScene extends Phaser.Scene {
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
     const prompt = text(this, 'PRESS ENTER', VIEW_W / 2, 172, 16);
     this.tweens.add({ targets: prompt, alpha: 0.25, yoyo: true, repeat: -1, duration: 600 });
-    const start = () => { unlockSfx(); sfx('select'); this.scene.start('Select'); };
+    const start = () => { unlockSfx(); sfx('select'); this.scene.start('Cast'); };
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-UP', start);
+  }
+}
+
+export class CastScene extends Phaser.Scene {
+  constructor() { super('Cast'); }
+
+  create() {
+    this.cameras.main.setBackgroundColor('#5c94fc');
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
+
+    text(this, 'THE CAST', VIEW_W / 2, 21, 18, '#ffd34d');
+    text(this, 'HEROES', 68, 47, 8, '#fff2c0');
+    text(this, 'CRYPTIDS', 291, 47, 8, '#fff2c0');
+
+    this.add.rectangle(66, 98, 92, 96, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
+    this.add.rectangle(166, 98, 92, 96, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
+    hero(this, 'jack', 66, 119, 62);
+    hero(this, 'evee', 166, 119, 62);
+    text(this, 'JACK', 66, 139, 8);
+    text(this, 'EVEE', 166, 139, 8);
+
+    const cryptids = [
+      ['enemy-grunt', 'GRUNT', 250, 105, 33],
+      ['enemy-chupacabra', 'CHUPA', 330, 105, 32],
+      ['enemy-mothman', 'MOTHMAN', 250, 181, 36],
+      ['enemy-boss', 'BIGFOOT', 330, 181, 50],
+    ];
+
+    for (const [key, name, x, footY, height] of cryptids) {
+      this.add.rectangle(x, footY - 24, 70, 58, 0x101020, 0.5).setStrokeStyle(1, 0xd9f3ff);
+      sprite(this, key, x, footY, height);
+      text(this, name, x, footY + 19, name.length > 6 ? 6 : 7, '#ffffff');
+    }
+
+    text(this, 'PRESS ENTER TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
+
+    const next = () => { sfx('select'); this.scene.start('Select'); };
+    this.input.keyboard.once('keydown-ENTER', next);
+    this.input.keyboard.once('keydown-SPACE', next);
+    this.input.keyboard.once('keydown-UP', next);
   }
 }
 

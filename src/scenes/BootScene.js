@@ -17,6 +17,8 @@ export class BootScene extends Phaser.Scene {
       this.scene.start('Level', { who: 'jack', levelIndex: Number(go.slice(4)) - 1, lives: 3, relics: 0, score: 0 });
     } else if (go === 'select') {
       this.scene.start('Select');
+    } else if (go === 'cast') {
+      this.scene.start('Cast');
     } else if (go === 'win') {
       this.scene.start('Win', { who: 'evee', score: 12000 });
     } else {

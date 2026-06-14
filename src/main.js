@@ -1,7 +1,7 @@
 import * as Phaser from 'phaser';
 import { VIEW_H, VIEW_W } from './data/constants.js';
 import { BootScene } from './scenes/BootScene.js';
-import { GameOverScene, SelectScene, TitleScene, WinScene } from './scenes/TitleScene.js';
+import { CastScene, GameOverScene, SelectScene, TitleScene, WinScene } from './scenes/TitleScene.js';
 import { LevelScene } from './scenes/LevelScene.js';
 import { UI_FONT_FAMILY } from './ui/textStyle.js';
 
@@ -30,7 +30,7 @@ const config = {
       debug: false,
     },
   },
-  scene: [BootScene, TitleScene, SelectScene, LevelScene, GameOverScene, WinScene],
+  scene: [BootScene, TitleScene, CastScene, SelectScene, LevelScene, GameOverScene, WinScene],
 };
 
 const game = new Phaser.Game(config);

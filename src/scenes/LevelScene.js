@@ -241,8 +241,9 @@ export class LevelScene extends Phaser.Scene {
     this.player.sprite.setVelocity(0, -260);
     this.player.sprite.body.checkCollision.none = true;
     this.time.delayedCall(900, () => {
+      this.input.keyboard?.resetKeys();
       if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
-      else this.scene.restart({ who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score });
+      else this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score });
     });
   }
 
@@ -256,7 +257,7 @@ export class LevelScene extends Phaser.Scene {
     this.time.delayedCall(900, () => {
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
-      else this.scene.restart({ who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
+      else this.scene.start('Level', { who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
     });
   }
 

@@ -80,8 +80,11 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0b0b16');
     text(this, 'GAME OVER', VIEW_W / 2, 92, 28, '#ff6a6a');
     text(this, `SCORE ${data.score || 0}`, VIEW_W / 2, 128, 12, '#ffffff');
-    text(this, 'PRESS ENTER', VIEW_W / 2, 170, 14, '#ffe060');
-    this.input.keyboard.once('keydown-ENTER', () => { sfx('select'); this.scene.start('Title'); });
+    text(this, 'PRESS ENTER / SPACE', VIEW_W / 2, 170, 14, '#ffe060');
+    const restart = () => { sfx('select'); this.scene.start('Title'); };
+    this.input.keyboard.once('keydown-ENTER', restart);
+    this.input.keyboard.once('keydown-SPACE', restart);
+    this.input.keyboard.once('keydown-UP', restart);
   }
 }
 

@@ -1,3 +1,5 @@
+import { PHYSICS } from '../data/constants.js';
+
 export function spawnEnemy(scene, def) {
   const key = def.type === 'boss' ? 'enemy-boss' : def.type === 'mothman' ? 'enemy-mothman' : def.type === 'chupacabra' ? 'enemy-chupacabra' : 'enemy-grunt';
   const e = scene.physics.add.sprite(def.x + 8, def.gy, key).setOrigin(0.5, 1).setDepth(8);
@@ -8,12 +10,11 @@ export function spawnEnemy(scene, def) {
   e.shell = false;
   e.dead = false;
   e.patrolDir = -1;
-  e.patrolSpeed = def.type === 'boss' ? 50 : def.type === 'chupacabra' ? 45 : 35;
+  e.patrolSpeed = PHYSICS.enemySpeed;
   setBody(e, Math.max(10, e.width * 0.75), Math.max(10, e.height * 0.75));
   if (def.type === 'mothman') {
     e.body.allowGravity = false;
     e.patrolDir = 1;
-    e.patrolSpeed = 45;
     e.setVelocityX(e.patrolSpeed);
   } else if (def.type === 'boss') {
     e.setDisplaySize(38, 38);
@@ -71,7 +72,7 @@ export function stompEnemy(scene, e) {
     return true;
   }
   if (e.kind === 'chupacabra' && e.shell && Math.abs(e.body.velocity.x) < 5) {
-    e.setVelocityX(scene.player.sprite.x < e.x ? 180 : -180);
+    e.setVelocityX(scene.player.sprite.x < e.x ? PHYSICS.shellSpeed : -PHYSICS.shellSpeed);
     return true;
   }
   e.dead = true;

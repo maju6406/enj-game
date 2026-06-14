@@ -16,16 +16,19 @@ export const SOLID = new Set(['#', 'B', '?', 'U', '[', ']', '{', '}', '=', 'X', 
 export const HAZARD = new Set(['^', 'v']);
 
 export const PHYSICS = {
-  gravity: 760,
-  runAccel: 30,
-  friction: 30,
-  maxRun: 142,
-  jumpVelocity: -300,
-  jumpCutMultiplier: 0.5,
-  coyoteMs: 100,
-  jumpBufferMs: 100,
-  stompBounce: -250,
-  stompBounceHeld: -285,
-  hurtKnockX: 120,
-  hurtKnockY: -210,
+  gravity: 600,
+  maxRun: 100,
+  jumpVelocity: -240,
+  enemySpeed: 40,
+  shellSpeed: 120,
+  stompBounce: -144,
+  hurtKnockX: 90,
+  hurtKnockY: -170,
+};
+
+export const SCORE = {
+  relic: 100,
+  enemy: 200,
+  item: 1000,
+  levelComplete: 1000,
 };

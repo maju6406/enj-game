@@ -8,8 +8,6 @@ export class Player {
     this.who = who;
     this.big = false;
     this.invulnUntil = 0;
-    this.jumpBufferedUntil = 0;
-    this.coyoteUntil = 0;
     this.sprite = scene.physics.add.sprite(x, y, `hero-${who}`)
       .setOrigin(0.5, 1)
       .setDepth(10);
@@ -63,34 +61,30 @@ export class Player {
     const body = this.sprite.body;
     const left = cursors.left.isDown || touch.left;
     const right = cursors.right.isDown || touch.right;
-    const jumpDown = cursors.up.isDown || keys.space.isDown || touch.jump;
     const touchJumpPressed = touch.jump && !this.touchJumpWasDown;
     const jumpPressed = Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(keys.space) || touchJumpPressed;
     this.touchJumpWasDown = touch.jump;
 
-    if (left) { body.setAccelerationX(-PHYSICS.runAccel * 10); this.sprite.setFlipX(true); }
-    else if (right) { body.setAccelerationX(PHYSICS.runAccel * 10); this.sprite.setFlipX(false); }
-    else {
-      body.setAccelerationX(0);
-      const drag = PHYSICS.friction * 10;
-      if (Math.abs(body.velocity.x) <= drag / 60) body.setVelocityX(0);
-      else body.setVelocityX(body.velocity.x + (body.velocity.x > 0 ? -drag / 60 : drag / 60));
+    body.setAccelerationX(0);
+    if (left) {
+      body.setVelocityX(-PHYSICS.maxRun);
+      this.sprite.setFlipX(true);
+    } else if (right) {
+      body.setVelocityX(PHYSICS.maxRun);
+      this.sprite.setFlipX(false);
+    } else {
+      body.setVelocityX(0);
     }
-    body.velocity.x = Phaser.Math.Clamp(body.velocity.x, -PHYSICS.maxRun, PHYSICS.maxRun);
 
-    if (body.blocked.down || body.touching.down) this.coyoteUntil = this.scene.time.now + PHYSICS.coyoteMs;
-    if (jumpPressed) this.jumpBufferedUntil = this.scene.time.now + PHYSICS.jumpBufferMs;
-    if (this.scene.time.now < this.jumpBufferedUntil && this.scene.time.now < this.coyoteUntil) {
+    if (jumpPressed && (body.blocked.down || body.touching.down)) {
       body.setVelocityY(PHYSICS.jumpVelocity);
-      this.jumpBufferedUntil = 0; this.coyoteUntil = 0;
       sfx('jump');
     }
-    if (!jumpDown && body.velocity.y < 0) body.setVelocityY(body.velocity.y * PHYSICS.jumpCutMultiplier);
 
     this.sprite.setAlpha(this.scene.time.now < this.invulnUntil && Math.floor(this.scene.time.now / 80) % 2 === 0 ? 0.35 : 1);
     if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer();
   }
 
-  bounce(held) { this.sprite.setVelocityY(held ? PHYSICS.stompBounceHeld : PHYSICS.stompBounce); }
+  bounce() { this.sprite.setVelocityY(PHYSICS.stompBounce); }
   get foot() { return this.sprite.y; }
 }

@@ -62,7 +62,7 @@ function level1() {
   b.enemy('grunt', 100); b.enemy('grunt', 102); b.enemy('mothman', 90, { fly: 6 });
   b.enemy('mothman', 160, { fly: 5 }); b.enemy('chupacabra', 140);
   b.stairs(188, 1, 4); b.flag(200); b.rect(204, 6, 208, 12, ' ');
-  return b.build({ name: 'CRYPT HOLLOW', theme: 'overworld', time: 400 });
+  return b.build({ name: 'CRYPT HOLLOW', theme: 'overworld', time: 300 });
 }
 
 function level2() {
@@ -77,7 +77,7 @@ function level2() {
   b.enemy('grunt', 30); b.enemy('chupacabra', 44); b.enemy('grunt', 58); b.enemy('grunt', 88, { row: 8 });
   b.enemy('chupacabra', 100); b.enemy('mothman', 78, { fly: 6 }); b.enemy('mothman', 130, { fly: 6 });
   b.enemy('grunt', 132); b.enemy('grunt', 134); b.pipe(150, 3); b.stairs(156, 1, 3); b.flag(166);
-  return b.build({ name: 'GLOOM CAVERN', theme: 'underground', time: 350 });
+  return b.build({ name: 'GLOOM CAVERN', theme: 'underground', time: 300 });
 }
 
 function level3() {
@@ -91,7 +91,7 @@ function level3() {
   b.enemy('mothman', 34, { fly: 6 }); b.enemy('mothman', 66, { fly: 5 }); b.enemy('mothman', 100, { fly: 7 });
   b.enemy('mothman', 138, { fly: 5 }); b.enemy('chupacabra', 47, { row: 8 });
   b.ground(160, 195); b.stairs(176, 1, 4); b.flag(188);
-  return b.build({ name: 'SKYWARD RIDGE', theme: 'athletic', time: 350 });
+  return b.build({ name: 'SKYWARD RIDGE', theme: 'athletic', time: 300 });
 }
 
 function level4() {
@@ -107,7 +107,7 @@ function level4() {
   b.enemy('chupacabra', 26); b.enemy('grunt', 48); b.enemy('grunt', 50); b.enemy('mothman', 60, { fly: 6 });
   b.enemy('chupacabra', 92); b.enemy('mothman', 110, { fly: 5 }); b.enemy('grunt', 130);
   b.rect(150, 0, 207, 1, '#'); b.enemy('boss', 180, { row: 13 }); b.isBoss = true;
-  return b.build({ name: 'DEVIL KEEP', theme: 'castle', time: 400 });
+  return b.build({ name: 'DEVIL KEEP', theme: 'castle', time: 300 });
 }
 
 export const LEVELS = [level1(), level2(), level3(), level4()];

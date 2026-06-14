@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { GAMEPLAY_ZOOM, HAZARD, PHYSICS, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
+import { GAMEPLAY_ZOOM, HAZARD, PHYSICS, SCORE, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
 import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
@@ -174,9 +174,9 @@ export class LevelScene extends Phaser.Scene {
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
     if (ch === '?') {
       sfx('coin');
-      this.addRelic(50);
+      this.addRelic();
       this.popRelic(block.x, block.y - TILE);
-      this.scorePop(block.x, block.y - 10, '+50');
+      this.scorePop(block.x, block.y - 10, `+${SCORE.relic}`);
     }
     if (ch === 'U') {
       sfx('power');
@@ -184,13 +184,13 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
-  collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, '+50'); coin.destroy(); sfx('coin'); this.addRelic(50); }
+  collectRelic(coin) { this.scorePop(coin.x, coin.y - 8, `+${SCORE.relic}`); coin.destroy(); sfx('coin'); this.addRelic(); }
   collectItem(item) {
-    this.scorePop(item.x, item.y - 10, '1000');
-    item.destroy(); this.player.grow(); sfx('power'); this.score += 1000; this.updateHud();
+    this.scorePop(item.x, item.y - 10, `${SCORE.item}`);
+    item.destroy(); this.player.grow(); sfx('power'); this.score += SCORE.item; this.updateHud();
   }
-  addRelic(points = 50) {
-    this.relics += 1; this.score += points;
+  addRelic() {
+    this.relics += 1; this.score += SCORE.relic;
     if (this.relics >= 100) { this.relics -= 100; this.lives += 1; }
     this.updateHud();
   }
@@ -202,13 +202,13 @@ export class LevelScene extends Phaser.Scene {
     if (falling && above && stompEnemy(this, enemy)) {
       this.player.bounce(this.cursors.up.isDown || this.keys.space.isDown);
       sfx(enemy.kind === 'boss' ? 'hurt' : 'stomp');
-      this.score += enemy.kind === 'boss' ? 0 : 100;
-      if (enemy.kind !== 'boss') this.scorePop(enemy.x, enemy.y - enemy.displayHeight, '100');
+      this.score += enemy.kind === 'boss' ? 0 : SCORE.enemy;
+      if (enemy.kind !== 'boss') this.scorePop(enemy.x, enemy.y - enemy.displayHeight, `${SCORE.enemy}`);
       this.updateHud();
       return;
     }
     if (enemy.kind === 'chupacabra' && enemy.shell && Math.abs(enemy.body.velocity.x) < 5) {
-      enemy.setVelocityX(this.player.sprite.x < enemy.x ? 180 : -180);
+      enemy.setVelocityX(this.player.sprite.x < enemy.x ? PHYSICS.shellSpeed : -PHYSICS.shellSpeed);
       this.player.bounce(false);
       return;
     }
@@ -222,8 +222,8 @@ export class LevelScene extends Phaser.Scene {
     if (!shell || !target || target.kind === 'boss') return;
     target.dead = true;
     target.disableBody(true, true);
-    this.score += 100;
-    this.scorePop(target.x, target.y - target.displayHeight, '100');
+    this.score += SCORE.enemy;
+    this.scorePop(target.x, target.y - target.displayHeight, `${SCORE.enemy}`);
     this.addBurst(target.x, target.y - target.displayHeight / 2, 0x9adf4a);
     sfx('stomp');
     this.updateHud();
@@ -250,7 +250,7 @@ export class LevelScene extends Phaser.Scene {
     if (this.clearing || this.level.isBoss) return;
     this.clearing = true;
     sfx('flag');
-    this.score += this.timeLeft * 10;
+    this.score += SCORE.levelComplete;
     this.updateHud();
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     this.time.delayedCall(900, () => {
@@ -264,7 +264,7 @@ export class LevelScene extends Phaser.Scene {
     if (this.clearing) return;
     this.clearing = true;
     sfx('win');
-    this.score += this.timeLeft * 10;
+    this.score += SCORE.levelComplete;
     this.time.delayedCall(500, () => this.scene.start('Win', { who: this.who, score: this.score }));
   }
 

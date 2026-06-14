@@ -44,13 +44,18 @@ export function tapRipple(scene, x, y, color = 0xffd34d) {
 }
 
 export function pulse(scene, targets, amount = 1.05, duration = 520) {
-  scene.tweens.add({
-    targets,
-    scaleX: amount,
-    scaleY: amount,
-    duration,
-    yoyo: true,
-    repeat: -1,
-    ease: 'Sine.easeInOut',
-  });
+  const list = Array.isArray(targets) ? targets : [targets];
+  for (const target of list) {
+    const baseScaleX = target.scaleX;
+    const baseScaleY = target.scaleY;
+    scene.tweens.add({
+      targets: target,
+      scaleX: baseScaleX * amount,
+      scaleY: baseScaleY * amount,
+      duration,
+      yoyo: true,
+      repeat: -1,
+      ease: 'Sine.easeInOut',
+    });
+  }
 }

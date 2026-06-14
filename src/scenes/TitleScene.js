@@ -20,6 +20,13 @@ function sprite(scene, key, x, footY, height, flip = false) {
     .setFlipX(flip);
 }
 
+function scheduleAttract(scene, nextScene, data = {}) {
+  scene.time.addEvent({
+    delay: 20000,
+    callback: () => scene.scene.start(nextScene, data),
+  });
+}
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
@@ -106,9 +113,7 @@ export class CastScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-UP', next);
     tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, next);
     if (this.isAttract) {
-      this.time.delayedCall(20000, () => {
-        if (!advanced) this.scene.start('Cryptids', { attract: true });
-      });
+      scheduleAttract(this, 'Cryptids', { attract: true });
     }
   }
 }
@@ -154,9 +159,7 @@ export class CryptidsScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-UP', play);
     tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, play);
     if (data.attract) {
-      this.time.delayedCall(20000, () => {
-        if (!advanced) this.scene.start('Powerups', { attract: true });
-      });
+      scheduleAttract(this, 'Powerups', { attract: true });
     }
   }
 }
@@ -201,9 +204,7 @@ export class PowerupsScene extends Phaser.Scene {
     this.input.keyboard.once('keydown-UP', play);
     tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, play);
     if (data.attract) {
-      this.time.delayedCall(20000, () => {
-        if (!advanced) this.scene.start('Title');
-      });
+      scheduleAttract(this, 'Title');
     }
   }
 }

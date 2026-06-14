@@ -41,9 +41,8 @@ export class TitleScene extends Phaser.Scene {
     ];
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
     menuPrompt(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
-    const countdown = text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
-    const countdownBar = menuPanel(this, VIEW_W / 2, 210, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 });
-    const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 210, 164, 4, 0xffd34d).setOrigin(0, 0.5);
+    menuPanel(this, VIEW_W / 2, 200, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 });
+    const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 200, 164, 4, 0xffd34d).setOrigin(0, 0.5);
     this.tweens.add({ targets: logo, y: '+=2', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     let started = false;
     let remaining = 30;
@@ -64,7 +63,6 @@ export class TitleScene extends Phaser.Scene {
       callback: () => {
         if (started) return;
         remaining -= 1;
-        countdown.setText(`DEMO STARTS IN ${remaining}`);
         countdownFill.displayWidth = Math.max(0, Math.round(164 * (remaining / 30)));
       },
     });

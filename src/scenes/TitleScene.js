@@ -36,18 +36,24 @@ export class TitleScene extends Phaser.Scene {
     text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
     const prompt = text(this, 'PRESS ENTER', VIEW_W / 2, 172, 16);
+    text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
     this.tweens.add({ targets: prompt, alpha: 0.25, yoyo: true, repeat: -1, duration: 600 });
-    const start = () => { unlockSfx(); sfx('select'); this.scene.start('Cast'); };
+    const start = () => { unlockSfx(); sfx('select'); this.scene.start('Select'); };
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-UP', start);
+    this.time.delayedCall(30000, () => {
+      const who = Phaser.Math.RND.pick(['jack', 'evee']);
+      this.scene.start('Level', { who, levelIndex: 0, lives: 1, relics: 0, score: 0, demo: true });
+    });
   }
 }
 
 export class CastScene extends Phaser.Scene {
   constructor() { super('Cast'); }
 
-  create() {
+  create(data = {}) {
+    this.isAttract = !!data.attract;
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
@@ -76,12 +82,50 @@ export class CastScene extends Phaser.Scene {
       text(this, name, x, footY + 19, name.length > 6 ? 6 : 7, '#ffffff');
     }
 
-    text(this, 'PRESS ENTER TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
+    text(this, this.isAttract ? 'PRESS ENTER TO PLAY' : 'PRESS ENTER TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
 
     const next = () => { sfx('select'); this.scene.start('Select'); };
     this.input.keyboard.once('keydown-ENTER', next);
     this.input.keyboard.once('keydown-SPACE', next);
     this.input.keyboard.once('keydown-UP', next);
+    if (this.isAttract) {
+      this.time.delayedCall(20000, () => this.scene.start('Cryptids', { attract: true }));
+    }
+  }
+}
+
+export class CryptidsScene extends Phaser.Scene {
+  constructor() { super('Cryptids'); }
+
+  create(data = {}) {
+    this.cameras.main.setBackgroundColor('#101020');
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
+
+    text(this, 'CRYPTID FIELD GUIDE', VIEW_W / 2, 22, 14, '#ffd34d');
+
+    const cryptids = [
+      ['enemy-grunt', 'GRUNT', 105, 75, 78, 32],
+      ['enemy-chupacabra', 'CHUPA', 279, 75, 78, 32],
+      ['enemy-mothman', 'MOTHMAN', 105, 157, 158, 36],
+      ['enemy-boss', 'BIGFOOT', 279, 157, 158, 43],
+    ];
+
+    for (const [key, name, x, cardY, footY, height] of cryptids) {
+      this.add.rectangle(x, cardY, 112, 70, 0x203050, 0.76).setStrokeStyle(2, 0xd9f3ff);
+      sprite(this, key, x, footY, height);
+      text(this, name, x, cardY + 25, name.length > 6 ? 7 : 8, '#ffffff');
+    }
+
+    text(this, 'PRESS ENTER TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
+
+    const play = () => { sfx('select'); this.scene.start('Select'); };
+    this.input.keyboard.once('keydown-ENTER', play);
+    this.input.keyboard.once('keydown-SPACE', play);
+    this.input.keyboard.once('keydown-UP', play);
+    if (data.attract) {
+      this.time.delayedCall(20000, () => this.scene.start('Title'));
+    }
   }
 }
 

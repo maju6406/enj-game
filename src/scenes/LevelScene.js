@@ -28,6 +28,7 @@ export class LevelScene extends Phaser.Scene {
     this.lives = data.lives ?? START_LIVES;
     this.relics = data.relics || 0;
     this.score = data.score || 0;
+    this.demo = !!data.demo;
     this.dying = false;
     this.clearing = false;
   }
@@ -81,10 +82,22 @@ export class LevelScene extends Phaser.Scene {
     this.uiCamera.ignore(this.children.list);
     this.createHud();
     this.createTouchControls();
+    if (this.demo) this.createDemoHud();
     this.timeLeft = this.level.time;
     this.timerEvent = this.time.addEvent({ delay: 1000, loop: true, callback: () => {
       this.timeLeft -= 1; if (this.timeLeft <= 0) this.killPlayer();
     } });
+    if (this.demo) {
+      this.demoStartedAt = this.time.now;
+      this.time.delayedCall(28000, () => this.endDemo());
+      const play = () => {
+        this.input.keyboard?.resetKeys();
+        this.scene.start('Select');
+      };
+      this.input.keyboard.once('keydown-ENTER', play);
+      this.input.keyboard.once('keydown-SPACE', play);
+      this.input.keyboard.once('keydown-UP', play);
+    }
   }
 
   bgColor() {
@@ -264,9 +277,18 @@ export class LevelScene extends Phaser.Scene {
     this.player.sprite.body.checkCollision.none = true;
     this.time.delayedCall(900, () => {
       this.input.keyboard?.resetKeys();
+      if (this.demo) {
+        this.scene.start('Cast', { attract: true });
+        return;
+      }
       if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
       else this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score });
     });
+  }
+
+  endDemo() {
+    if (!this.demo || this.dying || this.clearing) return;
+    this.killPlayer();
   }
 
   levelClear() {
@@ -277,6 +299,10 @@ export class LevelScene extends Phaser.Scene {
     this.updateHud();
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     this.time.delayedCall(900, () => {
+      if (this.demo) {
+        this.scene.start('Cast', { attract: true });
+        return;
+      }
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
       else this.scene.start('Level', { who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
@@ -311,6 +337,14 @@ export class LevelScene extends Phaser.Scene {
       ...Object.values(this.hud).filter((entry) => !Array.isArray(entry)),
     ]);
     this.updateHud();
+  }
+
+  createDemoHud() {
+    const banner = [
+      this.add.rectangle(VIEW_W / 2, 54, 136, 18, 0x101020, 0.72).setScrollFactor(0).setDepth(60),
+      label(this, 'DEMO MODE', VIEW_W / 2 - 40, 50, 8).setDepth(61),
+    ];
+    this.cameras.main.ignore(banner);
   }
 
   createTouchControls() {
@@ -389,7 +423,12 @@ export class LevelScene extends Phaser.Scene {
 
   update(time) {
     if (!this.player || this.dying || this.clearing) return;
-    this.player.update(this.cursors, this.keys, this.touch);
+    if (this.demo && time - (this.demoStartedAt || 0) > 28000) {
+      this.endDemo();
+      return;
+    }
+    const touch = this.demo ? this.demoInput(time) : this.touch;
+    this.player.update(this.cursors, this.keys, touch);
     this.updatePowerUps();
     this.enemies.children.each((e) => {
       if (e.y > VIEW_H + 96) {
@@ -413,5 +452,33 @@ export class LevelScene extends Phaser.Scene {
       if (item.body.blocked.right) item.setData('direction', -1);
       item.setVelocityX((item.getData('direction') || 1) * PHYSICS.powerupSpeed);
     });
+  }
+
+  demoInput(time) {
+    const body = this.player.sprite.body;
+    const x = this.player.sprite.x;
+    const y = this.player.foot;
+    const ahead = x + 18;
+    let jump = false;
+
+    if (body.blocked.right) jump = true;
+    if (body.blocked.down || body.touching.down) {
+      this.enemies.children.each((enemy) => {
+        if (!enemy.active || enemy.dead) return;
+        const dx = enemy.x - x;
+        if (dx > 8 && dx < 60 && Math.abs(enemy.y - y) < 42) jump = true;
+      });
+      this.items.children.each((item) => {
+        if (item.active && item.x > x && item.x - x < 34) jump = true;
+      });
+      this.solids.children.each((block) => {
+        if (!block.active) return;
+        const dx = block.x - ahead;
+        if (dx > 0 && dx < 18 && block.y < y - 18) jump = true;
+      });
+      if (Math.floor(time / 2100) !== Math.floor((time - 16) / 2100)) jump = true;
+    }
+
+    return { left: false, right: true, jump };
   }
 }

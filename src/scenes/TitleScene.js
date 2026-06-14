@@ -24,6 +24,12 @@ function sprite(scene, key, x, footY, height, flip = false) {
     .setFlipX(flip);
 }
 
+function tapZone(scene, x, y, width, height, onTap) {
+  return scene.add.zone(x, y, width, height)
+    .setInteractive({ useHandCursor: true })
+    .on('pointerup', onTap);
+}
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
@@ -35,14 +41,23 @@ export class TitleScene extends Phaser.Scene {
     text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d');
     text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
-    const prompt = text(this, 'PRESS ENTER', VIEW_W / 2, 172, 16);
+    const prompt = text(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
     text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
     this.tweens.add({ targets: prompt, alpha: 0.25, yoyo: true, repeat: -1, duration: 600 });
-    const start = () => { unlockSfx(); sfx('select'); this.scene.start('Select'); };
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      unlockSfx();
+      sfx('select');
+      this.scene.start('Select');
+    };
     this.input.keyboard.once('keydown-ENTER', start);
     this.input.keyboard.once('keydown-SPACE', start);
     this.input.keyboard.once('keydown-UP', start);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, start);
     this.time.delayedCall(30000, () => {
+      if (started) return;
       const who = Phaser.Math.RND.pick(['jack', 'evee']);
       this.scene.start('Level', { who, levelIndex: 0, lives: 1, relics: 0, score: 0, demo: true });
     });
@@ -82,14 +97,24 @@ export class CastScene extends Phaser.Scene {
       text(this, name, x, footY + 19, name.length > 6 ? 6 : 7, '#ffffff');
     }
 
-    text(this, this.isAttract ? 'PRESS ENTER TO PLAY' : 'PRESS ENTER TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
+    text(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
 
-    const next = () => { sfx('select'); this.scene.start('Select'); };
+    let advanced = false;
+    const next = () => {
+      if (advanced) return;
+      advanced = true;
+      unlockSfx();
+      sfx('select');
+      this.scene.start('Select');
+    };
     this.input.keyboard.once('keydown-ENTER', next);
     this.input.keyboard.once('keydown-SPACE', next);
     this.input.keyboard.once('keydown-UP', next);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, next);
     if (this.isAttract) {
-      this.time.delayedCall(20000, () => this.scene.start('Cryptids', { attract: true }));
+      this.time.delayedCall(20000, () => {
+        if (!advanced) this.scene.start('Cryptids', { attract: true });
+      });
     }
   }
 }
@@ -117,14 +142,24 @@ export class CryptidsScene extends Phaser.Scene {
       text(this, name, x, cardY + 25, name.length > 6 ? 7 : 8, '#ffffff');
     }
 
-    text(this, 'PRESS ENTER TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
+    text(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
 
-    const play = () => { sfx('select'); this.scene.start('Select'); };
+    let advanced = false;
+    const play = () => {
+      if (advanced) return;
+      advanced = true;
+      unlockSfx();
+      sfx('select');
+      this.scene.start('Select');
+    };
     this.input.keyboard.once('keydown-ENTER', play);
     this.input.keyboard.once('keydown-SPACE', play);
     this.input.keyboard.once('keydown-UP', play);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, play);
     if (data.attract) {
-      this.time.delayedCall(20000, () => this.scene.start('Title'));
+      this.time.delayedCall(20000, () => {
+        if (!advanced) this.scene.start('Title');
+      });
     }
   }
 }
@@ -143,11 +178,17 @@ export class SelectScene extends Phaser.Scene {
     hero(this, 'evee', 272, 145, HERO_DISPLAY.select);
     text(this, 'JACK', 112, 174, 14, '#ffffff');
     text(this, 'EVEE', 272, 174, 14, '#ffffff');
-    text(this, 'LEFT / RIGHT  ENTER', VIEW_W / 2, 214, 10, '#b9b9d6');
+    text(this, 'TAP HERO OR ENTER', VIEW_W / 2, 214, 10, '#b9b9d6');
     this.input.keyboard.on('keydown-LEFT', () => this.setPick(0));
     this.input.keyboard.on('keydown-RIGHT', () => this.setPick(1));
     this.input.keyboard.on('keydown-ENTER', () => this.start());
     this.input.keyboard.on('keydown-SPACE', () => this.start());
+    this.cards[0]
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => this.tapHero(0));
+    this.cards[1]
+      .setInteractive({ useHandCursor: true })
+      .on('pointerup', () => this.tapHero(1));
   }
   setPick(i) {
     if (this.pick !== i) sfx('select');
@@ -155,7 +196,13 @@ export class SelectScene extends Phaser.Scene {
     this.cards[0].setStrokeStyle(2, i === 0 ? 0xffffff : 0x505060);
     this.cards[1].setStrokeStyle(2, i === 1 ? 0xffffff : 0x505060);
   }
+  tapHero(i) {
+    this.setPick(i);
+    this.start();
+  }
   start() {
+    if (this.started) return;
+    this.started = true;
     unlockSfx();
     sfx('power');
     this.scene.start('Level', { who: this.pick === 0 ? 'jack' : 'evee', levelIndex: 0, lives: 3, relics: 0, score: 0 });

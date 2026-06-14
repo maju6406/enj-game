@@ -13,7 +13,7 @@ const TILE_KEY = {
 };
 
 function label(scene, txt, x, y, size = 10) {
-  return scene.add.text(x, y, txt, uiTextStyle(size, '#ffffff', 2))
+  return scene.add.text(Math.round(x), Math.round(y), txt, uiTextStyle(size, '#ffffff'))
     .setScrollFactor(0)
     .setDepth(50)
     .setResolution(1);

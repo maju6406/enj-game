@@ -87,8 +87,8 @@ export class CastScene extends Phaser.Scene {
     const evee = hero(this, 'evee', 265, 156, 92);
     text(this, 'JACK', 119, 183, 11);
     text(this, 'EVEE', 265, 183, 11);
-    text(this, 'BRAVE EXPLORER', 119, 199, 5, '#fff2c0');
-    text(this, 'CRYPTID SLEUTH', 265, 199, 5, '#fff2c0');
+    text(this, 'BRAVE EXPLORER', 119, 199, 6, '#fff2c0');
+    text(this, 'CRYPTID SLEUTH', 265, 199, 6, '#fff2c0');
     pulse(this, [jack, evee], 1.03, 720);
 
     menuPrompt(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8);
@@ -134,8 +134,8 @@ export class CryptidsScene extends Phaser.Scene {
       menuPanel(this, x, cardY, 126, 70);
       const img = sprite(this, key, x, footY - 8, height);
       text(this, name, x, cardY + 11, name.length > 6 ? 7 : 8, '#ffffff');
-      text(this, stat, x, cardY + 25, 4, '#fff2c0');
-      text(this, trick, x, cardY + 36, 4, '#b9e6ff');
+      text(this, stat, x, cardY + 25, 6, '#fff2c0');
+      text(this, trick, x, cardY + 37, 6, '#b9e6ff');
       this.tweens.add({ targets: img, y: '-=2', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
@@ -182,7 +182,7 @@ export class PowerupsScene extends Phaser.Scene {
       menuPanel(this, x, cardY, 126, 70);
       const img = sprite(this, key, x, cardY + 3, height);
       text(this, name, x, cardY + 24, name.length > 8 ? 6 : 8, '#ffffff');
-      text(this, desc, x, cardY + 38, 4, '#fff2c0');
+      text(this, desc, x, cardY + 39, 6, '#fff2c0');
       this.tweens.add({ targets: img, y: '-=4', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
@@ -224,8 +224,8 @@ export class SelectScene extends Phaser.Scene {
     ];
     text(this, 'JACK', 112, 171, 13, '#ffffff');
     text(this, 'EVEE', 272, 171, 13, '#ffffff');
-    text(this, 'BRAVE EXPLORER', 112, 190, 5, '#fff2c0');
-    text(this, 'CRYPTID SLEUTH', 272, 190, 5, '#fff2c0');
+    text(this, 'BRAVE EXPLORER', 112, 190, 6, '#fff2c0');
+    text(this, 'CRYPTID SLEUTH', 272, 190, 6, '#fff2c0');
     menuPrompt(this, 'TAP HERO OR ENTER', VIEW_W / 2, 216, 9);
     this.input.keyboard.on('keydown-LEFT', () => this.setPick(0));
     this.input.keyboard.on('keydown-RIGHT', () => this.setPick(1));

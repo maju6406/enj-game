@@ -1,7 +1,7 @@
 import { uiTextStyle } from './textStyle.js';
 
 export function menuText(scene, value, x, y, size = 18, color = '#ffffff') {
-  return scene.add.text(x, y, value, uiTextStyle(size, color, 3))
+  return scene.add.text(Math.round(x), Math.round(y), value, uiTextStyle(size, color))
     .setOrigin(0.5)
     .setResolution(1);
 }

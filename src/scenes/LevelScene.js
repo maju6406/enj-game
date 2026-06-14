@@ -4,6 +4,7 @@ import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
 import { sfx } from '../systems/sfx.js';
+import { uiTextStyle } from '../ui/textStyle.js';
 
 const TILE_KEY = {
   '#': 'tile-ground', X: 'tile-stone', B: 'tile-brick', '?': 'tile-question', U: 'tile-question',
@@ -12,10 +13,10 @@ const TILE_KEY = {
 };
 
 function label(scene, txt, x, y, size = 10) {
-  return scene.add.text(x, y, txt, {
-    fontFamily: 'Courier New, monospace', fontSize: `${size}px`, color: '#fff',
-    stroke: '#101020', strokeThickness: 2,
-  }).setScrollFactor(0).setDepth(50).setResolution(1);
+  return scene.add.text(x, y, txt, uiTextStyle(size, '#ffffff', 2))
+    .setScrollFactor(0)
+    .setDepth(50)
+    .setResolution(1);
 }
 
 export class LevelScene extends Phaser.Scene {
@@ -357,13 +358,10 @@ export class LevelScene extends Phaser.Scene {
   }
 
   scorePop(x, y, value) {
-    const pop = this.ignoreUi(this.add.text(x, y, value, {
-      fontFamily: 'Courier New, monospace',
-      fontSize: '9px',
-      color: '#ffffff',
-      stroke: '#101020',
-      strokeThickness: 2,
-    }).setOrigin(0.5).setDepth(40).setResolution(1));
+    const pop = this.ignoreUi(this.add.text(x, y, value, uiTextStyle(9, '#ffffff', 2))
+      .setOrigin(0.5)
+      .setDepth(40)
+      .setResolution(1));
     this.tweens.add({
       targets: pop,
       y: y - 16,

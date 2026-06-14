@@ -3,6 +3,12 @@ import { VIEW_H, VIEW_W } from './data/constants.js';
 import { BootScene } from './scenes/BootScene.js';
 import { GameOverScene, SelectScene, TitleScene, WinScene } from './scenes/TitleScene.js';
 import { LevelScene } from './scenes/LevelScene.js';
+import { UI_FONT_FAMILY } from './ui/textStyle.js';
+
+if (document.fonts?.load) {
+  await document.fonts.load(`16px ${UI_FONT_FAMILY}`);
+  await document.fonts.ready;
+}
 
 const config = {
   type: Phaser.CANVAS,

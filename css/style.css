@@ -1,5 +1,8 @@
+@import "../node_modules/@fontsource/press-start-2p/latin.css";
+
 :root {
   --bg: #0b0b16;
+  --ui-font: "Press Start 2P", "Arial Black", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -11,7 +14,7 @@ html, body {
   height: 100%;
   background: var(--bg);
   color: #fff;
-  font-family: "Courier New", Courier, monospace;
+  font-family: var(--ui-font);
   overflow: hidden;
 }
 
@@ -48,7 +51,7 @@ body {
 }
 
 #overlay-hint {
-  font-size: 13px;
+  font-size: 10px;
   letter-spacing: 1px;
   color: #b9b9d6;
   opacity: 0.85;
@@ -69,7 +72,7 @@ body {
   color: #ffffff;
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 1px;
   padding: 4px 8px;
 }

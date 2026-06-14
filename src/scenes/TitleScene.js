@@ -1,15 +1,10 @@
 import * as Phaser from 'phaser';
 import { HERO_DISPLAY, VIEW_H, VIEW_W } from '../data/constants.js';
 import { sfx, unlockSfx } from '../systems/sfx.js';
+import { uiTextStyle } from '../ui/textStyle.js';
 
 function text(scene, value, x, y, size = 18, color = '#ffffff') {
-  return scene.add.text(x, y, value, {
-    fontFamily: 'Courier New, monospace',
-    fontSize: `${size}px`,
-    color,
-    stroke: '#101020',
-    strokeThickness: 3,
-  }).setOrigin(0.5).setResolution(1);
+  return scene.add.text(x, y, value, uiTextStyle(size, color, 3)).setOrigin(0.5).setResolution(1);
 }
 
 function hero(scene, who, x, footY, height, flip = false) {

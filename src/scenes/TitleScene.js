@@ -127,17 +127,17 @@ export class CryptidsScene extends Phaser.Scene {
     text(this, 'CRYPTID FIELD GUIDE', VIEW_W / 2, 18, 13, '#ffd34d');
 
     const cryptids = [
-      ['enemy-grunt', 'GRUNT', 105, 75, 78, 32],
-      ['enemy-chupacabra', 'CHUPA', 279, 75, 78, 32],
-      ['enemy-mothman', 'MOTHMAN', 105, 157, 158, 36],
-      ['enemy-boss', 'BIGFOOT', 279, 157, 158, 43],
+      ['enemy-grunt', 'GRUNT', 105, 75, 32],
+      ['enemy-chupacabra', 'CHUPA', 279, 75, 32],
+      ['enemy-mothman', 'MOTHMAN', 105, 157, 36],
+      ['enemy-boss', 'BIGFOOT', 279, 157, 43],
     ];
 
-    for (const [key, name, x, cardY, footY, height] of cryptids) {
+    for (const [key, name, x, cardY, height] of cryptids) {
       menuPanel(this, x, cardY, 126, 70);
-      const img = sprite(this, key, x, footY - 6, height);
+      const img = sprite(this, key, x, cardY + 12, height);
       text(this, name, x, cardY + 24, name.length > 6 ? 7 : 8, '#ffffff');
-      this.tweens.add({ targets: img, y: '-=2', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: img, y: '-=1', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
     menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);

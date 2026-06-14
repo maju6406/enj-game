@@ -273,9 +273,8 @@ export class LevelScene extends Phaser.Scene {
     this.dying = true;
     this.lives -= 1;
     sfx('die');
-    this.player.sprite.setVelocity(0, -260);
-    this.player.sprite.body.checkCollision.none = true;
-    this.time.delayedCall(900, () => {
+    this.playDeathSequence();
+    this.time.delayedCall(1600, () => {
       this.input.keyboard?.resetKeys();
       if (this.demo) {
         this.scene.start('Cast', { attract: true });
@@ -283,6 +282,58 @@ export class LevelScene extends Phaser.Scene {
       }
       if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
       else this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score });
+    });
+  }
+
+  playDeathSequence() {
+    const sprite = this.player.sprite;
+    const camera = this.cameras.main;
+    const deathX = Phaser.Math.Clamp(sprite.x, camera.worldView.x + 24, camera.worldView.right - 24);
+    const deathY = Math.min(sprite.y, camera.worldView.bottom - 26);
+
+    sprite.body.checkCollision.none = true;
+    sprite.setPosition(deathX, deathY);
+    sprite.setVelocity(0, -360);
+    sprite.setAcceleration(0, 0);
+    sprite.setDepth(80);
+    sprite.setAlpha(1);
+    sprite.setTint(0xfff2c0);
+
+    this.cameras.main.flash(160, 255, 245, 190);
+    this.cameras.main.shake(380, 0.018);
+    this.addBurst(deathX, deathY - sprite.displayHeight / 2, 0xffd34d);
+    this.addBurst(deathX, deathY - sprite.displayHeight / 2, 0xff6a6a);
+
+    this.tweens.add({
+      targets: sprite,
+      angle: sprite.flipX ? -720 : 720,
+      scaleX: sprite.scaleX * 1.12,
+      scaleY: sprite.scaleY * 1.12,
+      duration: 420,
+      ease: 'Back.easeOut',
+      yoyo: true,
+      onComplete: () => sprite.clearTint(),
+    });
+
+    this.tweens.add({
+      targets: sprite,
+      alpha: 0.2,
+      duration: 90,
+      yoyo: true,
+      repeat: 5,
+    });
+
+    const banner = [
+      this.add.rectangle(VIEW_W / 2, 91, 156, 24, 0x101020, 0.78).setScrollFactor(0).setDepth(95),
+      label(this, this.lives <= 0 ? 'FINAL LIFE LOST' : 'LOST A LIFE', VIEW_W / 2, 85, 10).setDepth(96),
+    ];
+    this.cameras.main.ignore(banner);
+    this.tweens.add({
+      targets: banner,
+      alpha: 0,
+      delay: 920,
+      duration: 360,
+      ease: 'Quad.easeIn',
     });
   }
 

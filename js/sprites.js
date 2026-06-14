@@ -284,95 +284,237 @@
   }
 
   /* ---------------- cryptids ---------------- */
+  // Grunt: a mossy swamp goblin (goomba-analog). 16x16 hitbox.
   function drawGrunt(ctx, X, Y, t, state) {
+    const OL = '#142507', DK = '#34520f', MD = '#5a8c22', LT = '#7fb838',
+          HL = '#a6dd56', BL = '#cdee8c', BONE = '#e7dcb0', BONES = '#9a8e60';
     if (state === 'squished') {
-      p(ctx,'#4a7320',X+1,Y+10,14,5); p(ctx,'#6fa838',X+2,Y+11,12,3);
-      p(ctx,'#000',X+4,Y+12,2,1); p(ctx,'#000',X+10,Y+12,2,1); return;
+      p(ctx,OL,X+1,Y+11,14,5);
+      p(ctx,DK,X+2,Y+12,12,3);
+      p(ctx,MD,X+2,Y+12,12,1); p(ctx,HL,X+3,Y+12,10,1);
+      p(ctx,BONES,X+2,Y+11,1,1); p(ctx,BONES,X+13,Y+11,1,1); // flattened horns
+      p(ctx,OL,X+4,Y+13,2,2); p(ctx,OL,X+10,Y+13,2,2);        // X_X eyes
+      p(ctx,'#cdee8c',X+4,Y+13,1,1); p(ctx,'#cdee8c',X+11,Y+13,1,1);
+      return;
     }
     const step = Math.sin(t / 6) > 0 ? 1 : 0;
-    p(ctx,'#2f4a14',X+1+step,Y+11,5,4); p(ctx,'#2f4a14',X+10-step,Y+11,5,4);
-    p(ctx,'#4a7320',X+1,Y+1,14,11); p(ctx,'#6fa838',X+2,Y+2,12,8);
-    p(ctx,'#8ec84e',X+3,Y+2,10,3);
-    p(ctx,'#3a5a18',X+3,Y-1,2,3); p(ctx,'#3a5a18',X+11,Y-1,2,3); // horns
-    p(ctx,'#fff',X+4,Y+4,3,3); p(ctx,'#fff',X+9,Y+4,3,3);
-    p(ctx,'#000',X+5,Y+5,2,2); p(ctx,'#000',X+10,Y+5,2,2);
-    p(ctx,'#243a0e',X+4,Y+3,3,1); p(ctx,'#243a0e',X+9,Y+3,3,1);
-    p(ctx,'#243a0e',X+5,Y+9,6,1);
+    // clawed feet
+    p(ctx,OL,X+1+step,Y+13,5,3); p(ctx,OL,X+10-step,Y+13,5,3);
+    p(ctx,DK,X+2+step,Y+13,3,2); p(ctx,DK,X+11-step,Y+13,3,2);
+    p(ctx,'#0e1a05',X+2+step,Y+15,1,1); p(ctx,'#0e1a05',X+4+step,Y+15,1,1);
+    p(ctx,'#0e1a05',X+11-step,Y+15,1,1); p(ctx,'#0e1a05',X+13-step,Y+15,1,1);
+    // horns
+    p(ctx,OL,X+2,Y-2,3,5); p(ctx,OL,X+11,Y-2,3,5);
+    p(ctx,BONES,X+3,Y-2,2,4); p(ctx,BONES,X+11,Y-2,2,4);
+    p(ctx,BONE,X+3,Y-2,1,3); p(ctx,BONE,X+11,Y-2,1,3);
+    // body outline + shaded fill
+    p(ctx,OL,X+2,Y+1,12,13); p(ctx,OL,X+1,Y+3,14,9);
+    p(ctx,DK,X+2,Y+3,12,10);
+    p(ctx,MD,X+3,Y+2,10,10);
+    p(ctx,LT,X+3,Y+2,10,4); p(ctx,HL,X+4,Y+2,8,2);
+    // mossy speckles + belly
+    p(ctx,HL,X+3,Y+8,2,1); p(ctx,HL,X+12,Y+7,1,2);
+    p(ctx,BL,X+5,Y+9,6,3); p(ctx,MD,X+5,Y+11,6,1);
+    // angry brow ridge
+    p(ctx,OL,X+3,Y+4,5,2); p(ctx,OL,X+8,Y+4,5,2);
+    p(ctx,OL,X+5,Y+3,2,1); p(ctx,OL,X+9,Y+3,2,1);
+    // eyes (whites + dark pupils + amber glint)
+    p(ctx,'#f4f8e8',X+4,Y+6,3,3); p(ctx,'#f4f8e8',X+9,Y+6,3,3);
+    p(ctx,OL,X+5,Y+6,2,2); p(ctx,OL,X+10,Y+6,2,2);
+    p(ctx,'#ffb43a',X+5,Y+6,1,1); p(ctx,'#ffb43a',X+10,Y+6,1,1);
+    // snarling mouth with fangs
+    p(ctx,OL,X+5,Y+10,6,1);
+    p(ctx,'#f4f8e8',X+5,Y+11,1,1); p(ctx,'#f4f8e8',X+10,Y+11,1,1);
   }
 
+  // Chupacabra: an upright reptilian beast (koopa-analog). 14x22 hitbox.
   function drawChupacabra(ctx, X, Y, t, state, facing) {
+    const OL = '#0d2118', DK = '#214a35', MD = '#3a7a58', LT = '#56a878',
+          HL = '#7fd2a2', BL = '#bdeccb', SP = '#e2f4ea', EYE = '#ff2e2e';
     if (state === 'shell') {
-      p(ctx,'#2a4a3a',X+1,Y+6,14,9); p(ctx,'#3f7a5a',X+2,Y+7,12,6);
-      p(ctx,'#7fdcae',X+3,Y+8,4,2);
-      for (let i = 0; i < 3; i++) p(ctx,'#cfe',X+3+i*4,Y+5,2,2); // spikes
-      p(ctx,'#1c3326',X+1,Y+13,14,2); return;
+      // domed spiny shell
+      p(ctx,OL,X+1,Y+6,14,10);
+      p(ctx,DK,X+2,Y+7,12,8);
+      p(ctx,MD,X+3,Y+8,10,6);
+      p(ctx,LT,X+3,Y+8,9,2); p(ctx,BL,X+4,Y+8,3,1);
+      p(ctx,DK,X+1,Y+14,14,2); p(ctx,OL,X+1,Y+15,14,1);
+      // segment seams
+      p(ctx,OL,X+6,Y+8,1,6); p(ctx,OL,X+10,Y+8,1,6);
+      p(ctx,HL,X+4,Y+11,1,2); p(ctx,HL,X+8,Y+11,1,2);
+      // rim spikes
+      for (let i = 0; i < 4; i++) { p(ctx,OL,X+2+i*3,Y+4,2,3); p(ctx,SP,X+2+i*3,Y+4,1,2); }
+      return;
     }
     const f = facing < 0 ? -1 : 1;
+    const M = (a) => f > 0 ? a : 14 - a;            // mirror helper (x within sprite)
     const step = Math.sin(t / 6) > 0 ? 1 : 0;
-    // legs
-    p(ctx,'#2a5a3a',X+3+step,Y+17,3,4); p(ctx,'#2a5a3a',X+10-step,Y+17,3,4);
-    // body
-    p(ctx,'#3f7a5a',X+3,Y+8,10,10); p(ctx,'#56a878',X+4,Y+9,8,7);
-    p(ctx,'#2a4a3a',X+3,Y+8,10,1);
-    // back spikes
-    p(ctx,'#cfe',X+4,Y+6,2,2); p(ctx,'#cfe',X+7,Y+5,2,2); p(ctx,'#cfe',X+10,Y+6,2,2);
+    // tail (trails behind)
+    p(ctx,OL,X+M(f>0?0:11),Y+12,4,5);
+    p(ctx,MD,X+M(f>0?1:11),Y+13,2,3); p(ctx,LT,X+M(f>0?1:12),Y+13,1,2);
+    // legs + clawed feet
+    p(ctx,OL,X+3+step,Y+17,4,5); p(ctx,OL,X+8-step,Y+17,4,5);
+    p(ctx,MD,X+4+step,Y+17,2,4); p(ctx,MD,X+9-step,Y+17,2,4);
+    p(ctx,'#0a1812',X+3+step,Y+21,4,1); p(ctx,'#0a1812',X+8-step,Y+21,4,1);
+    // torso
+    p(ctx,OL,X+3,Y+8,8,11);
+    p(ctx,DK,X+4,Y+9,6,9);
+    p(ctx,MD,X+4,Y+9,5,8);
+    p(ctx,LT,X+5,Y+9,3,3);
+    // pale belly on the facing side
+    p(ctx,BL,X+(f>0?7:4),Y+11,3,6); p(ctx,'#8fd0a8',X+(f>0?7:4),Y+16,3,1);
+    // dorsal spikes
+    for (let i = 0; i < 4; i++) {
+      const sx = X + (f>0 ? 3 + i : 9 - i), sy = Y + 7 - i;
+      p(ctx,OL,sx,sy,2,2); p(ctx,SP,sx,sy,1,1);
+    }
     // head
-    p(ctx,'#3f7a5a',X+ (f>0?9:3),Y+5,5,6); p(ctx,'#56a878',X+(f>0?10:4),Y+6,3,3);
-    p(ctx,'#ff3030',X+(f>0?11:4),Y+6,2,2); // red eye
-    p(ctx,'#ffd0d0',X+(f>0?11:4),Y+6,1,1);
-    p(ctx,'#1c3326',X+(f>0?9:6),Y+10,4,1); // mouth
+    const hx = f>0 ? X+7 : X+1;
+    p(ctx,OL,hx,Y+2,6,8);
+    p(ctx,DK,hx+1,Y+3,4,6);
+    p(ctx,MD,hx+1,Y+3,4,5); p(ctx,LT,hx+1,Y+3,4,2);
+    // snout
+    p(ctx,OL,X+(f>0?12:0),Y+6,2,3); p(ctx,MD,X+(f>0?12:1),Y+7,1,2);
+    p(ctx,OL,X+(f>0?13:0),Y+7,1,1);   // nostril
+    // ear/horn back of head
+    p(ctx,OL,hx+(f>0?0:4),Y,2,3); p(ctx,SP,hx+(f>0?0:4),Y,1,2);
+    // glowing eye
+    p(ctx,'#fff',hx+(f>0?2:2),Y+4,2,2);
+    p(ctx,EYE,hx+(f>0?2:2),Y+4,2,1); p(ctx,'#ffd0d0',hx+(f>0?3:2),Y+4,1,1);
+    // fanged grin
+    p(ctx,OL,X+(f>0?9:1),Y+8,4,1);
+    p(ctx,'#fff',X+(f>0?9:1),Y+8,1,1); p(ctx,'#fff',X+(f>0?12:4),Y+8,1,1);
   }
 
+  // Mothman: a furred winged cryptid with glowing red eyes. 16x16 hitbox.
   function drawMothman(ctx, X, Y, t) {
-    const wy = Math.round(Math.sin(t / 7) * 2);
-    p(ctx,'#2b2b40',X-5,Y+3+wy,8,11); p(ctx,'#2b2b40',X+13,Y+3+wy,8,11);
-    p(ctx,'#3d3d5a',X-4,Y+5+wy,6,8); p(ctx,'#3d3d5a',X+14,Y+5+wy,6,8);
-    p(ctx,'#53536f',X-3,Y+7+wy,3,5); p(ctx,'#53536f',X+16,Y+7+wy,3,5);
-    p(ctx,'#1c1c2a',X+3,Y+2,10,14); p(ctx,'#33334a',X+4,Y+3,8,11);
-    p(ctx,'#43435e',X+5,Y+4,2,7);
-    p(ctx,'#15151f',X+5,Y+14,2,3); p(ctx,'#15151f',X+9,Y+14,2,3);
-    p(ctx,'#222232',X+4,Y,8,4); p(ctx,'#222232',X+4,Y-2,1,2); p(ctx,'#222232',X+11,Y-2,1,2);
-    p(ctx,'rgba(255,40,40,.35)',X+3,Y+1,10,5);
-    p(ctx,'#ff2a2a',X+4,Y+2,3,3); p(ctx,'#ff2a2a',X+9,Y+2,3,3);
-    p(ctx,'#ffd0d0',X+5,Y+2,1,1); p(ctx,'#ffd0d0',X+10,Y+2,1,1);
-    p(ctx,'#0a0a12',X+6,Y+8,4,4);
+    const OL = '#0b0b14', BD = '#262638', BM = '#3a3a55', BH = '#52526e',
+          WD = '#1c1c33', WM = '#373758', WL = '#56567e';
+    const flap = Math.round(Math.sin(t / 6) * 3);
+    function wing(dir) {                 // dir: -1 left, +1 right
+      const ox = dir < 0 ? X - 6 : X + 12;
+      const ix = dir < 0 ? 0 : 6;        // inner-edge offset for fills
+      // upper blade
+      p(ctx,OL,ox,Y+1+flap,8,7);
+      p(ctx,WD,ox+(dir<0?1:0),Y+2+flap,7,6);
+      p(ctx,WM,ox+(dir<0?2:0),Y+3+flap,5,4);
+      p(ctx,WL,ox+(dir<0?3:1),Y+4+flap,2,2);
+      // lower blade
+      p(ctx,OL,ox,Y+8-flap,8,6);
+      p(ctx,WD,ox+(dir<0?1:0),Y+9-flap,7,5);
+      p(ctx,WM,ox+(dir<0?2:0),Y+10-flap,5,3);
+      // eyespot pattern
+      p(ctx,'#15152a',ox+(dir<0?3:2),Y+4+flap,2,2);
+    }
+    wing(-1); wing(1);
+    // furry torso
+    p(ctx,OL,X+4,Y+1,8,14);
+    p(ctx,BD,X+5,Y+2,6,12);
+    p(ctx,BM,X+5,Y+3,4,9); p(ctx,BH,X+6,Y+4,1,6);
+    // fuzzy silhouette flecks
+    p(ctx,BD,X+4,Y+5,1,1); p(ctx,BD,X+11,Y+6,1,1);
+    p(ctx,BD,X+4,Y+10,1,1); p(ctx,BD,X+11,Y+10,1,1);
+    // little legs
+    p(ctx,OL,X+5,Y+14,2,2); p(ctx,OL,X+9,Y+14,2,2);
+    // antennae
+    p(ctx,OL,X+4,Y-2,1,3); p(ctx,OL,X+11,Y-2,1,3);
+    p(ctx,BH,X+3,Y-2,1,1); p(ctx,BH,X+12,Y-2,1,1);
+    // glowing red eyes
+    p(ctx,'rgba(255,40,40,.30)',X+3,Y+1,10,6);
+    p(ctx,'#7a0000',X+4,Y+3,3,4); p(ctx,'#7a0000',X+9,Y+3,3,4);
+    p(ctx,'#ff2a2a',X+4,Y+3,3,3); p(ctx,'#ff2a2a',X+9,Y+3,3,3);
+    p(ctx,'#ffd0d0',X+5,Y+3,1,1); p(ctx,'#ffd0d0',X+10,Y+3,1,1);
   }
 
   // Boss: The Jersey Devil (~48 wide x 44 tall).
   function drawBoss(ctx, X, Y, t, flash) {
-    const body = flash ? '#ffffff' : '#3a2440';
+    const OL = '#160c1e', body = flash ? '#ffffff' : '#3a2440',
+          DK = flash ? '#fff' : '#4a2f54', MD = flash ? '#fff' : '#5e3d6a',
+          HL = flash ? '#fff' : '#7a5588';
     const wy = Math.round(Math.sin(t / 9) * 3);
-    // wings
-    p(ctx,'#241730',X-6,Y+6+wy,12,22); p(ctx,'#241730',X+42,Y+6+wy,12,22);
-    p(ctx,'#3a2a4e',X-4,Y+9+wy,9,16); p(ctx,'#3a2a4e',X+43,Y+9+wy,9,16);
-    p(ctx,'#52406e',X-2,Y+12+wy,4,10); p(ctx,'#52406e',X+46,Y+12+wy,4,10);
-    // body
-    p(ctx,body,X+8,Y+8,32,30); p(ctx,flash?'#fff':'#4a2f54',X+10,Y+10,28,24);
-    p(ctx,flash?'#fff':'#5e3d6a',X+12,Y+12,10,8);
-    // legs/hooves
-    p(ctx,'#1c1226',X+12,Y+36,7,8); p(ctx,'#1c1226',X+29,Y+36,7,8);
-    p(ctx,'#000',X+12,Y+42,7,2); p(ctx,'#000',X+29,Y+42,7,2);
-    // head + horns
-    p(ctx,body,X+14,Y-4,20,16); p(ctx,flash?'#fff':'#4a2f54',X+16,Y-2,16,12);
-    p(ctx,'#d8d0e0',X+13,Y-12,4,10); p(ctx,'#d8d0e0',X+31,Y-12,4,10); // horns
-    p(ctx,'#b8a8c8',X+13,Y-12,4,3); p(ctx,'#b8a8c8',X+31,Y-12,4,3);
-    // glowing eyes + grin
-    p(ctx,'rgba(255,210,40,.4)',X+15,Y,18,8);
+    // membranous bat wings
+    function wing(dir) {
+      const ox = dir < 0 ? X - 8 : X + 40;
+      p(ctx,OL,ox,Y+4+wy,16,26);
+      p(ctx,'#241730',ox+(dir<0?2:0),Y+6+wy,14,22);
+      p(ctx,'#3a2a4e',ox+(dir<0?4:0),Y+9+wy,10,16);
+      p(ctx,'#52406e',ox+(dir<0?6:2),Y+12+wy,4,10);
+      // wing finger struts
+      p(ctx,OL,ox+(dir<0?2:13),Y+6+wy,1,20);
+      p(ctx,OL,ox+(dir<0?7:8),Y+8+wy,1,16);
+    }
+    wing(-1); wing(1);
+    // torso
+    p(ctx,OL,X+7,Y+7,34,32);
+    p(ctx,body,X+8,Y+8,32,30);
+    p(ctx,DK,X+10,Y+10,28,24);
+    p(ctx,MD,X+12,Y+12,11,9);
+    p(ctx,HL,X+13,Y+12,4,3);             // chest highlight
+    // ribs / fur shading
+    p(ctx,OL,X+23,Y+14,1,18); p(ctx,DK,X+24,Y+16,3,14);
+    // muscular legs + cloven hooves
+    p(ctx,OL,X+11,Y+34,9,10); p(ctx,OL,X+28,Y+34,9,10);
+    p(ctx,DK,X+12,Y+35,7,8); p(ctx,DK,X+29,Y+35,7,8);
+    p(ctx,'#0d0712',X+12,Y+42,7,2); p(ctx,'#0d0712',X+29,Y+42,7,2);
+    p(ctx,OL,X+15,Y+42,1,2); p(ctx,OL,X+32,Y+42,1,2); // hoof cleft
+    // head
+    p(ctx,OL,X+13,Y-5,22,18);
+    p(ctx,body,X+14,Y-4,20,16);
+    p(ctx,DK,X+16,Y-2,16,12);
+    p(ctx,MD,X+17,Y-1,6,5);
+    // ram horns
+    p(ctx,OL,X+11,Y-13,5,12); p(ctx,OL,X+32,Y-13,5,12);
+    p(ctx,'#cfc6dd',X+12,Y-12,3,10); p(ctx,'#cfc6dd',X+33,Y-12,3,10);
+    p(ctx,'#f0eaf6',X+12,Y-12,1,8); p(ctx,'#f0eaf6',X+33,Y-12,1,8);
+    p(ctx,'#9a8eb0',X+12,Y-3,3,3); p(ctx,'#9a8eb0',X+33,Y-3,3,3);
+    // pointed ears
+    p(ctx,OL,X+17,Y-7,3,4); p(ctx,OL,X+28,Y-7,3,4);
+    // glowing eyes + snout
+    p(ctx,'rgba(255,200,40,.45)',X+15,Y-1,18,9);
+    p(ctx,OL,X+17,Y+1,5,5); p(ctx,OL,X+26,Y+1,5,5);
     p(ctx,'#ffd24a',X+18,Y+2,4,4); p(ctx,'#ffd24a',X+26,Y+2,4,4);
-    p(ctx,'#fff',X+19,Y+2,1,1); p(ctx,'#fff',X+27,Y+2,1,1);
-    p(ctx,'#1a0e22',X+18,Y+9,12,2);
-    for (let i = 0; i < 5; i++) p(ctx,'#fff',X+19+i*2,Y+9,1,1); // fangs
+    p(ctx,'#fff7c0',X+19,Y+2,1,1); p(ctx,'#fff7c0',X+27,Y+2,1,1);
+    p(ctx,'#7a1010',X+18,Y+5,4,1); p(ctx,'#7a1010',X+26,Y+5,4,1);
+    // snarling fanged maw
+    p(ctx,OL,X+17,Y+8,14,4); p(ctx,'#1a0e22',X+18,Y+9,12,2);
+    for (let i = 0; i < 6; i++) {
+      p(ctx,'#fff',X+18+i*2,Y+9,1,1);
+      p(ctx,'#e8e8f0',X+19+i*2,Y+10,1,1);
+    }
   }
 
   /* ---------------- items / props ---------------- */
+  // Cryptid Journal power-up: an ornate glowing tome (mushroom-analog).
   function drawJournal(ctx, X, Y, t) {
-    const g = (Math.sin(t / 8) + 1) / 2;
-    p(ctx,'#5a2f12',X+1,Y+1,13,13);                 // cover
-    p(ctx,'#7a431c',X+2,Y+2,11,11);
-    p(ctx,'#f4e8c8',X+11,Y+2,2,11);                 // pages
-    p(ctx,'#caa86a',X+3,Y+3,7,1); p(ctx,'#caa86a',X+3,Y+11,7,1);
-    p(ctx,`rgba(120,220,255,${.4 + g * .5})`,X+4,Y+5,5,4); // glowing rune
-    p(ctx,'#bfefff',X+6,Y+5,1,4); p(ctx,'#bfefff',X+4,Y+6,5,1);
+    const g = (Math.sin(t / 8) + 1) / 2;            // 0..1 pulse
+    const bob = Math.round(Math.sin(t / 10) * 1);
+    Y += bob;
+    const OL = '#2a1306', CV = '#7a431c', CVD = '#5a2f12', CVH = '#a06a30',
+          PG = '#f4e8c8', PGS = '#d8c69a', GOLD = '#e7c25a', GOLDH = '#fff0a8';
+    // glow aura
+    p(ctx,`rgba(150,225,255,${0.10 + g * 0.18})`,X+1,Y+1,13,13);
+    // page block (right edge) + outline
+    p(ctx,OL,X+1,Y,13,15);
+    p(ctx,PGS,X+11,Y+1,3,13);
+    p(ctx,PG,X+11,Y+1,2,13);
+    for (let i = 0; i < 5; i++) p(ctx,PGS,X+12,Y+2+i*2,2,1); // page lines
+    // leather cover
+    p(ctx,CVD,X+1,Y+1,11,13);
+    p(ctx,CV,X+2,Y+1,9,12);
+    p(ctx,CVH,X+2,Y+1,9,2);                          // top bevel light
+    p(ctx,CVD,X+2,Y+12,9,1);
+    p(ctx,CVD,X+10,Y+1,1,12);                         // spine shadow
+    // gold corner studs + border
+    p(ctx,GOLD,X+2,Y+1,2,1); p(ctx,GOLD,X+9,Y+1,2,1);
+    p(ctx,GOLD,X+2,Y+12,2,1); p(ctx,GOLD,X+9,Y+12,2,1);
+    p(ctx,GOLD,X+3,Y+3,6,1); p(ctx,GOLDH,X+3,Y+3,3,1);
+    // glowing rune sigil (eye-in-triangle)
+    const rg = 0.45 + g * 0.5;
+    p(ctx,`rgba(130,225,255,${rg})`,X+4,Y+5,5,5);
+    p(ctx,'#bfefff',X+6,Y+5,1,5); p(ctx,'#bfefff',X+4,Y+9,5,1);
+    p(ctx,'#eaffff',X+6,Y+7,1,1);
+    // sparkle that drifts
+    const sp = (t % 40) < 20;
+    if (sp) { p(ctx,'#fff',X+12,Y-1,1,1); p(ctx,'#cdeeff',X+13,Y+4,1,1); }
   }
 
   function drawFlag(ctx, X, baseY, heightPx, t) {

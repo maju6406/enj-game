@@ -7,11 +7,14 @@
     return {
       who, x: 0, y: 0, w: 12, h: 20, vx: 0, vy: 0,
       facing: 1, onGround: false, big: false, invuln: 0,
-      jumpHeld: false, state: 'idle', animT: 0, alive: true,
+      jumpHeld: false, jumpBuffer: 0, coyote: 0, state: 'idle', animT: 0, alive: true,
     };
   }
 
-  function place(p, x, y) { p.x = x; p.y = y; p.vx = 0; p.vy = 0; }
+  function place(p, x, y) {
+    p.x = x; p.y = y; p.vx = 0; p.vy = 0;
+    p.onGround = false; p.jumpHeld = false; p.jumpBuffer = 0; p.coyote = 0;
+  }
 
   function grow(p) {
     if (p.big) return;
@@ -42,12 +45,31 @@
     p.vx = Math.max(-P.MAX_RUN, Math.min(P.MAX_RUN, p.vx));
 
     // ---- jump ----
-    if (p.onGround && Input.pressed('jump')) {
-      p.vy = P.JUMP_VEL; p.onGround = false; p.jumpHeld = true; Audio2.jump();
+    if (p.onGround) p.coyote = P.COYOTE_FRAMES;
+    else if (p.coyote > 0) p.coyote--;
+
+    if (Input.pressed('jump')) p.jumpBuffer = P.JUMP_BUFFER_FRAMES;
+    else if (p.jumpBuffer > 0) p.jumpBuffer--;
+
+    const jumpHeldNow = Input.held('jump');
+    if (p.jumpBuffer > 0 && (p.onGround || p.coyote > 0)) {
+      p.vy = P.JUMP_VEL;
+      p.onGround = false;
+      p.coyote = 0;
+      p.jumpBuffer = 0;
+      p.jumpHeld = jumpHeldNow;
+      Audio2.jump();
+    } else if (p.jumpHeld && !jumpHeldNow && p.vy < 0) {
+      p.vy *= P.JUMP_CUT_MULT;
+      p.jumpHeld = false;
+    } else if (!jumpHeldNow) {
+      p.jumpHeld = false;
     }
-    if (!Input.held('jump')) p.jumpHeld = false;
+
     const rising = p.vy < 0;
-    const grav = (p.jumpHeld && rising) ? P.JUMP_HOLD_GRAV : P.GRAVITY;
+    const grav = (p.jumpHeld && rising)
+      ? P.JUMP_HOLD_GRAV
+      : (!jumpHeldNow && rising ? P.JUMP_RELEASE_GRAV : P.GRAVITY);
     p.vy = Math.min(p.vy + grav, P.MAX_FALL);
 
     // ---- move + collide ----
@@ -96,17 +118,9 @@
     if (p.invuln > 0 && (Math.floor(p.invuln / 4) % 2 === 0)) return; // blink
     const h = p.big ? 44 : 30;
     const w = Math.round(h * aspect(p.who));
-    let sx = 1, sy = 1, footOff = 0;
-    if (p.state === 'jump') {
-      if (p.vy < 0) { sy = 1.08; sx = 0.93; } else { sy = 0.95; sx = 1.06; }
-    } else if (p.state === 'walk') {
-      const b = Math.sin(p.animT / 4);
-      sy = 1 + b * 0.05; sx = 1 - b * 0.04; footOff = -Math.abs(b);
-    } else {
-      sy = 1 + Math.sin(p.animT / 26) * 0.02;
-    }
+    const sx = 1, sy = 1;
     const cx = Math.round(p.x + p.w / 2 - camX);
-    const footY = Math.round(p.y + p.h + footOff);
+    const footY = Math.round(p.y + p.h);
     Sprites.drawHero(ctx, p.who, cx, footY, w, h, p.facing, sx, sy);
   }
 

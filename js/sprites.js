@@ -155,7 +155,7 @@
     ctx.scale(sx || 1, sy || 1);
     if (img) {
       const prev = ctx.imageSmoothingEnabled;
-      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(img, -w / 2, -h, w, h);
       ctx.imageSmoothingEnabled = prev;
     } else {
@@ -425,61 +425,45 @@
     p(ctx,'#ffd0d0',X+5,Y+3,1,1); p(ctx,'#ffd0d0',X+10,Y+3,1,1);
   }
 
-  // Boss: The Jersey Devil (~48 wide x 44 tall).
+  // Boss: Bigfoot (~48 wide x 44 tall).
   function drawBoss(ctx, X, Y, t, flash) {
-    const OL = '#160c1e', body = flash ? '#ffffff' : '#3a2440',
-          DK = flash ? '#fff' : '#4a2f54', MD = flash ? '#fff' : '#5e3d6a',
-          HL = flash ? '#fff' : '#7a5588';
-    const wy = Math.round(Math.sin(t / 9) * 3);
-    // membranous bat wings
-    function wing(dir) {
-      const ox = dir < 0 ? X - 8 : X + 40;
-      p(ctx,OL,ox,Y+4+wy,16,26);
-      p(ctx,'#241730',ox+(dir<0?2:0),Y+6+wy,14,22);
-      p(ctx,'#3a2a4e',ox+(dir<0?4:0),Y+9+wy,10,16);
-      p(ctx,'#52406e',ox+(dir<0?6:2),Y+12+wy,4,10);
-      // wing finger struts
-      p(ctx,OL,ox+(dir<0?2:13),Y+6+wy,1,20);
-      p(ctx,OL,ox+(dir<0?7:8),Y+8+wy,1,16);
-    }
-    wing(-1); wing(1);
-    // torso
-    p(ctx,OL,X+7,Y+7,34,32);
-    p(ctx,body,X+8,Y+8,32,30);
-    p(ctx,DK,X+10,Y+10,28,24);
-    p(ctx,MD,X+12,Y+12,11,9);
-    p(ctx,HL,X+13,Y+12,4,3);             // chest highlight
-    // ribs / fur shading
-    p(ctx,OL,X+23,Y+14,1,18); p(ctx,DK,X+24,Y+16,3,14);
-    // muscular legs + cloven hooves
-    p(ctx,OL,X+11,Y+34,9,10); p(ctx,OL,X+28,Y+34,9,10);
-    p(ctx,DK,X+12,Y+35,7,8); p(ctx,DK,X+29,Y+35,7,8);
-    p(ctx,'#0d0712',X+12,Y+42,7,2); p(ctx,'#0d0712',X+29,Y+42,7,2);
-    p(ctx,OL,X+15,Y+42,1,2); p(ctx,OL,X+32,Y+42,1,2); // hoof cleft
-    // head
-    p(ctx,OL,X+13,Y-5,22,18);
-    p(ctx,body,X+14,Y-4,20,16);
-    p(ctx,DK,X+16,Y-2,16,12);
-    p(ctx,MD,X+17,Y-1,6,5);
-    // ram horns
-    p(ctx,OL,X+11,Y-13,5,12); p(ctx,OL,X+32,Y-13,5,12);
-    p(ctx,'#cfc6dd',X+12,Y-12,3,10); p(ctx,'#cfc6dd',X+33,Y-12,3,10);
-    p(ctx,'#f0eaf6',X+12,Y-12,1,8); p(ctx,'#f0eaf6',X+33,Y-12,1,8);
-    p(ctx,'#9a8eb0',X+12,Y-3,3,3); p(ctx,'#9a8eb0',X+33,Y-3,3,3);
-    // pointed ears
-    p(ctx,OL,X+17,Y-7,3,4); p(ctx,OL,X+28,Y-7,3,4);
-    // glowing eyes + snout
-    p(ctx,'rgba(255,200,40,.45)',X+15,Y-1,18,9);
-    p(ctx,OL,X+17,Y+1,5,5); p(ctx,OL,X+26,Y+1,5,5);
-    p(ctx,'#ffd24a',X+18,Y+2,4,4); p(ctx,'#ffd24a',X+26,Y+2,4,4);
-    p(ctx,'#fff7c0',X+19,Y+2,1,1); p(ctx,'#fff7c0',X+27,Y+2,1,1);
-    p(ctx,'#7a1010',X+18,Y+5,4,1); p(ctx,'#7a1010',X+26,Y+5,4,1);
-    // snarling fanged maw
-    p(ctx,OL,X+17,Y+8,14,4); p(ctx,'#1a0e22',X+18,Y+9,12,2);
-    for (let i = 0; i < 6; i++) {
-      p(ctx,'#fff',X+18+i*2,Y+9,1,1);
-      p(ctx,'#e8e8f0',X+19+i*2,Y+10,1,1);
-    }
+    const OL = flash ? '#ffffff' : '#1b0f08',
+          DK = flash ? '#ffffff' : '#2a170c',
+          FUR = flash ? '#ffffff' : '#6f4324',
+          MID = flash ? '#ffffff' : '#9b6738',
+          HI = flash ? '#ffffff' : '#c28a50',
+          SKIN = flash ? '#ffffff' : '#b9824a';
+    const sway = Math.round(Math.sin(t / 12) * 1);
+    // broad furry arms
+    p(ctx,OL,X+2,Y+14+sway,11,22); p(ctx,DK,X+3,Y+15+sway,9,19);
+    p(ctx,FUR,X+5,Y+17+sway,6,16); p(ctx,HI,X+5,Y+18+sway,2,5);
+    p(ctx,OL,X+35,Y+14-sway,11,22); p(ctx,DK,X+36,Y+15-sway,9,19);
+    p(ctx,FUR,X+36,Y+17-sway,6,16); p(ctx,HI,X+40,Y+18-sway,2,5);
+    // heavy torso
+    p(ctx,OL,X+11,Y+10,26,28);
+    p(ctx,FUR,X+12,Y+9,24,28);
+    p(ctx,MID,X+16,Y+13,16,21);
+    p(ctx,HI,X+17,Y+15,5,5); p(ctx,HI,X+27,Y+17,4,4);
+    p(ctx,DK,X+23,Y+16,2,17);
+    p(ctx,DK,X+18,Y+24,2,7); p(ctx,DK,X+28,Y+24,2,7);
+    // legs and oversized feet
+    p(ctx,OL,X+11,Y+34,13,9); p(ctx,OL,X+25,Y+34,13,9);
+    p(ctx,FUR,X+12,Y+35,11,7); p(ctx,FUR,X+26,Y+35,11,7);
+    p(ctx,DK,X+10,Y+40,15,4); p(ctx,DK,X+24,Y+40,15,4);
+    p(ctx,FUR,X+11,Y+40,13,3); p(ctx,FUR,X+25,Y+40,13,3);
+    // head, brow, and face
+    p(ctx,OL,X+15,Y+0,18,17);
+    p(ctx,FUR,X+16,Y-1,16,17);
+    p(ctx,DK,X+15,Y+0,18,5);
+    p(ctx,SKIN,X+18,Y+5,10,8);
+    p(ctx,DK,X+17,Y+5,3,2); p(ctx,DK,X+27,Y+5,3,2);
+    p(ctx,'#ffffff',X+19,Y+7,3,3); p(ctx,'#ffffff',X+27,Y+7,3,3);
+    p(ctx,'#111111',X+20,Y+8,1,1); p(ctx,'#111111',X+27,Y+8,1,1);
+    p(ctx,DK,X+22,Y+11,6,2);
+    p(ctx,HI,X+21,Y+10,2,1); p(ctx,HI,X+29,Y+10,2,1);
+    // shaggy outline flecks
+    p(ctx,DK,X+13,Y+13,2,2); p(ctx,DK,X+34,Y+14,2,2);
+    p(ctx,HI,X+14,Y+20,2,3); p(ctx,HI,X+31,Y+23,2,3);
   }
 
   /* ---------------- items / props ---------------- */

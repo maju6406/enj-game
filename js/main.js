@@ -77,10 +77,19 @@
       this.state = 'dead'; this.timer = 100;
       this.player.alive = false; this.player.vy = -7; this.player.invuln = 0;
     },
-    hurtPlayer() {
+    hurtPlayer(sourceX) {
       const p = this.player;
       if (p.invuln > 0 || !p.alive) return;
-      if (p.big) { Player.shrink(p); Audio2.shrink(); }
+      if (p.big) {
+        const playerMid = p.x + p.w / 2;
+        const dir = (sourceX == null) ? (p.facing >= 0 ? -1 : 1) : (playerMid < sourceX ? -1 : 1);
+        Player.shrink(p);
+        p.vx = dir * Physics.HURT_KNOCKBACK_X;
+        p.vy = Physics.HURT_KNOCKBACK_Y;
+        p.onGround = false;
+        p.x += dir * 4;
+        Audio2.shrink();
+      }
       else this.playerDie();
     },
 
@@ -301,7 +310,7 @@
       lvl.enemies = lvl.enemies.filter((e) => !e.remove);
 
       const maxCam = Math.max(0, lvl.pixelWidth - VIEW_W);
-      this.camX = Math.max(0, Math.min(maxCam, p.x + p.w / 2 - VIEW_W / 2));
+      this.camX = Math.round(Math.max(0, Math.min(maxCam, p.x + p.w / 2 - VIEW_W / 2)));
     },
 
     resolveEnemies() {
@@ -315,10 +324,10 @@
 
         if (e.type === 'grunt') {
           if (stomp) this.stompKill(e, 'grunt');
-          else this.hurtPlayer();
+          else this.hurtPlayer(e.x + e.w / 2);
         } else if (e.type === 'mothman') {
           if (stomp) this.stompKill(e, 'mothman');
-          else this.hurtPlayer();
+          else this.hurtPlayer(e.x + e.w / 2);
         } else if (e.type === 'chupacabra') {
           if (e.state === 'shell') {
             // idle shell: kick it
@@ -329,13 +338,13 @@
             else p.invuln = Math.max(p.invuln, 8);
           } else if (e.state === 'slide') {
             if (stomp) { e.state = 'shell'; e.vx = 0; this.bounce(); Audio2.stomp(); }
-            else this.hurtPlayer();
+            else this.hurtPlayer(e.x + e.w / 2);
           } else { // walking
             if (stomp) {
               e.state = 'shell'; e.vx = 0; e.h = 12; e.y += 10;
               this.bounce(); Audio2.stomp(); this.score += e.points;
               this.level.spawnParticles(e.x + e.w / 2, e.y, '#7fdcae', 5);
-            } else this.hurtPlayer();
+            } else this.hurtPlayer(e.x + e.w / 2);
           }
         } else if (e.type === 'boss') {
           if (stomp && e.flash <= 0) {
@@ -345,12 +354,15 @@
               e.dead = true; e.timer = 1; e.remove = true; this.score += e.points;
               this.win();
             }
-          } else if (e.flash <= 0) this.hurtPlayer();
+          } else if (e.flash <= 0) this.hurtPlayer(e.x + e.w / 2);
         }
         if (this.state !== 'play') return;
       }
     },
-    bounce() { this.player.vy = Input.held('jump') ? -7 : -5.2; this.player.onGround = false; },
+    bounce() {
+      this.player.vy = Input.held('jump') ? Physics.STOMP_BOUNCE_HELD : Physics.STOMP_BOUNCE;
+      this.player.onGround = false;
+    },
     stompKill(e, kind) {
       e.dead = true; e.state = 'squished'; e.timer = (kind === 'mothman') ? 18 : 26;
       this.bounce(); Audio2.stomp(); this.score += e.points;

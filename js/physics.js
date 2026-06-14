@@ -6,13 +6,21 @@
   const Physics = {
     GRAVITY: 0.5,
     MAX_FALL: 9,
-    WALK_ACCEL: 0.32,
-    RUN_ACCEL: 0.45,
-    FRICTION: 0.28,
+    WALK_ACCEL: 0.36,
+    RUN_ACCEL: 0.52,
+    FRICTION: 0.38,
     MAX_WALK: 1.8,
-    MAX_RUN: 3.0,
-    JUMP_VEL: -8.3,
-    JUMP_HOLD_GRAV: 0.24, // reduced gravity while jump held & rising
+    MAX_RUN: 3.2,
+    JUMP_VEL: -6.8,
+    JUMP_HOLD_GRAV: 0.3, // reduced gravity while jump held & rising
+    JUMP_RELEASE_GRAV: 0.68, // stronger gravity for short-hop release
+    JUMP_CUT_MULT: 0.5, // one-time upward speed cut on jump release
+    COYOTE_FRAMES: 6,
+    JUMP_BUFFER_FRAMES: 6,
+    STOMP_BOUNCE: -5.4,
+    STOMP_BOUNCE_HELD: -5.9,
+    HURT_KNOCKBACK_X: 2.2,
+    HURT_KNOCKBACK_Y: -4.6,
 
     solid(code) { return SOLID.has(code); },
     hazard(code) { return HAZARD.has(code); },

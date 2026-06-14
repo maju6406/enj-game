@@ -1,11 +1,7 @@
 import * as Phaser from 'phaser';
 import { HERO_DISPLAY, VIEW_H, VIEW_W } from '../data/constants.js';
 import { sfx, unlockSfx } from '../systems/sfx.js';
-import { uiTextStyle } from '../ui/textStyle.js';
-
-function text(scene, value, x, y, size = 18, color = '#ffffff') {
-  return scene.add.text(x, y, value, uiTextStyle(size, color, 3)).setOrigin(0.5).setResolution(1);
-}
+import { menuPanel, menuPrompt, menuText as text, pulse, tapRipple, tapZone } from '../ui/menuUi.js';
 
 function hero(scene, who, x, footY, height, flip = false) {
   const key = `hero-${who}`;
@@ -24,12 +20,6 @@ function sprite(scene, key, x, footY, height, flip = false) {
     .setFlipX(flip);
 }
 
-function tapZone(scene, x, y, width, height, onTap) {
-  return scene.add.zone(x, y, width, height)
-    .setInteractive({ useHandCursor: true })
-    .on('pointerup', onTap);
-}
-
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
@@ -38,12 +28,16 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
     hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);
     hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true);
-    text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d');
-    text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a');
+    const logo = [
+      text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d'),
+      text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a'),
+    ];
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
-    const prompt = text(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
+    menuPrompt(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
     const countdown = text(this, 'DEMO STARTS IN 30', VIEW_W / 2, 196, 7, '#fff2c0');
-    this.tweens.add({ targets: prompt, alpha: 0.25, yoyo: true, repeat: -1, duration: 600 });
+    const countdownBar = menuPanel(this, VIEW_W / 2, 210, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 });
+    const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 210, 164, 4, 0xffd34d).setOrigin(0, 0.5);
+    this.tweens.add({ targets: logo, y: '+=2', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     let started = false;
     let remaining = 30;
     const start = () => {
@@ -64,6 +58,7 @@ export class TitleScene extends Phaser.Scene {
         if (started) return;
         remaining -= 1;
         countdown.setText(`DEMO STARTS IN ${remaining}`);
+        countdownFill.displayWidth = Math.max(0, Math.round(164 * (remaining / 30)));
       },
     });
     this.time.delayedCall(30000, () => {
@@ -86,14 +81,17 @@ export class CastScene extends Phaser.Scene {
     text(this, 'THE CAST', VIEW_W / 2, 25, 20, '#ffd34d');
     text(this, 'JACK & EVEE', VIEW_W / 2, 51, 10, '#fff2c0');
 
-    this.add.rectangle(119, 124, 112, 136, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
-    this.add.rectangle(265, 124, 112, 136, 0x203050, 0.72).setStrokeStyle(2, 0xffffff);
-    hero(this, 'jack', 119, 156, 92);
-    hero(this, 'evee', 265, 156, 92);
+    menuPanel(this, 119, 124, 112, 136, { stroke: 0xffffff });
+    menuPanel(this, 265, 124, 112, 136, { stroke: 0xffffff });
+    const jack = hero(this, 'jack', 119, 156, 92);
+    const evee = hero(this, 'evee', 265, 156, 92);
     text(this, 'JACK', 119, 183, 11);
     text(this, 'EVEE', 265, 183, 11);
+    text(this, 'BRAVE EXPLORER', 119, 199, 5, '#fff2c0');
+    text(this, 'CRYPTID SLEUTH', 265, 199, 5, '#fff2c0');
+    pulse(this, [jack, evee], 1.03, 720);
 
-    text(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8, '#ffe060');
+    menuPrompt(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8);
 
     let advanced = false;
     const next = () => {
@@ -123,22 +121,25 @@ export class CryptidsScene extends Phaser.Scene {
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
 
-    text(this, 'CRYPTID FIELD GUIDE', VIEW_W / 2, 22, 14, '#ffd34d');
+    text(this, 'CRYPTID FIELD GUIDE', VIEW_W / 2, 18, 13, '#ffd34d');
 
     const cryptids = [
-      ['enemy-grunt', 'GRUNT', 105, 75, 78, 32],
-      ['enemy-chupacabra', 'CHUPA', 279, 75, 78, 32],
-      ['enemy-mothman', 'MOTHMAN', 105, 157, 158, 36],
-      ['enemy-boss', 'BIGFOOT', 279, 157, 158, 43],
+      ['enemy-grunt', 'GRUNT', 'HABITAT: ROADS', 'TRICK: MARCHES', 105, 75, 78, 30],
+      ['enemy-chupacabra', 'CHUPA', 'HABITAT: CAVES', 'TRICK: SHELL', 279, 75, 78, 30],
+      ['enemy-mothman', 'MOTHMAN', 'HABITAT: SKIES', 'TRICK: SWOOPS', 105, 157, 158, 34],
+      ['enemy-boss', 'BIGFOOT', 'HABITAT: KEEP', 'TRICK: STOMPS', 279, 157, 158, 40],
     ];
 
-    for (const [key, name, x, cardY, footY, height] of cryptids) {
-      this.add.rectangle(x, cardY, 112, 70, 0x203050, 0.76).setStrokeStyle(2, 0xd9f3ff);
-      sprite(this, key, x, footY, height);
-      text(this, name, x, cardY + 25, name.length > 6 ? 7 : 8, '#ffffff');
+    for (const [key, name, stat, trick, x, cardY, footY, height] of cryptids) {
+      menuPanel(this, x, cardY, 126, 70);
+      const img = sprite(this, key, x, footY - 8, height);
+      text(this, name, x, cardY + 11, name.length > 6 ? 7 : 8, '#ffffff');
+      text(this, stat, x, cardY + 25, 4, '#fff2c0');
+      text(this, trick, x, cardY + 36, 4, '#b9e6ff');
+      this.tweens.add({ targets: img, y: '-=2', duration: 760, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
-    text(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
+    menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
 
     let advanced = false;
     const play = () => {
@@ -168,22 +169,24 @@ export class PowerupsScene extends Phaser.Scene {
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
 
-    text(this, 'POWER UPS', VIEW_W / 2, 22, 18, '#ffd34d');
+    text(this, 'POWER UPS', VIEW_W / 2, 18, 18, '#ffd34d');
 
     const powerups = [
-      ['tile-question', 'POWER BLOCK', 105, 75, 38],
-      ['journal', 'JOURNAL', 279, 75, 34],
-      ['relic', 'RELIC', 105, 157, 30],
-      ['heart', 'LIFE HEART', 279, 157, 28],
+      ['tile-question', 'POWER BLOCK', 'BUMP FOR SURPRISES', 105, 75, 38],
+      ['journal', 'JOURNAL', 'GROW AND TAKE A HIT', 279, 75, 34],
+      ['relic', 'RELIC', '100 EARNS A LIFE', 105, 157, 30],
+      ['heart', 'LIFE HEART', 'TRACKS 3 CHANCES', 279, 157, 28],
     ];
 
-    for (const [key, name, x, cardY, height] of powerups) {
-      this.add.rectangle(x, cardY, 112, 70, 0x203050, 0.76).setStrokeStyle(2, 0xd9f3ff);
-      sprite(this, key, x, cardY + 7, height);
-      text(this, name, x, cardY + 25, name.length > 8 ? 6 : 8, '#ffffff');
+    for (const [key, name, desc, x, cardY, height] of powerups) {
+      menuPanel(this, x, cardY, 126, 70);
+      const img = sprite(this, key, x, cardY + 3, height);
+      text(this, name, x, cardY + 24, name.length > 8 ? 6 : 8, '#ffffff');
+      text(this, desc, x, cardY + 38, 4, '#fff2c0');
+      this.tweens.add({ targets: img, y: '-=4', duration: 680, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }
 
-    text(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8, '#ffe060');
+    menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
 
     let advanced = false;
     const play = () => {
@@ -210,34 +213,46 @@ export class SelectScene extends Phaser.Scene {
   create() {
     this.pick = 0;
     this.cameras.main.setBackgroundColor('#1c244a');
-    text(this, 'CHOOSE YOUR HERO', VIEW_W / 2, 28, 18, '#ffe060');
+    text(this, 'CHOOSE YOUR HERO', VIEW_W / 2, 24, 17, '#ffe060');
     this.cards = [
-      this.add.rectangle(112, 118, 112, 138, 0x203050).setStrokeStyle(2, 0xffffff),
-      this.add.rectangle(272, 118, 112, 138, 0x203050).setStrokeStyle(2, 0x505060),
+      menuPanel(this, 112, 119, 122, 142, { stroke: 0xffffff }),
+      menuPanel(this, 272, 119, 122, 142, { stroke: 0x505060 }),
     ];
-    hero(this, 'jack', 112, 145, HERO_DISPLAY.select);
-    hero(this, 'evee', 272, 145, HERO_DISPLAY.select);
-    text(this, 'JACK', 112, 174, 14, '#ffffff');
-    text(this, 'EVEE', 272, 174, 14, '#ffffff');
-    text(this, 'TAP HERO OR ENTER', VIEW_W / 2, 214, 10, '#b9b9d6');
+    this.heroSprites = [
+      hero(this, 'jack', 112, 143, HERO_DISPLAY.select),
+      hero(this, 'evee', 272, 143, HERO_DISPLAY.select),
+    ];
+    text(this, 'JACK', 112, 171, 13, '#ffffff');
+    text(this, 'EVEE', 272, 171, 13, '#ffffff');
+    text(this, 'BRAVE EXPLORER', 112, 190, 5, '#fff2c0');
+    text(this, 'CRYPTID SLEUTH', 272, 190, 5, '#fff2c0');
+    menuPrompt(this, 'TAP HERO OR ENTER', VIEW_W / 2, 216, 9);
     this.input.keyboard.on('keydown-LEFT', () => this.setPick(0));
     this.input.keyboard.on('keydown-RIGHT', () => this.setPick(1));
     this.input.keyboard.on('keydown-ENTER', () => this.start());
     this.input.keyboard.on('keydown-SPACE', () => this.start());
     this.cards[0]
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.tapHero(0));
+      .on('pointerup', (pointer) => this.tapHero(0, pointer));
     this.cards[1]
       .setInteractive({ useHandCursor: true })
-      .on('pointerup', () => this.tapHero(1));
+      .on('pointerup', (pointer) => this.tapHero(1, pointer));
+    this.setPick(0, true);
   }
-  setPick(i) {
-    if (this.pick !== i) sfx('select');
+  setPick(i, silent = false) {
+    if (this.pick !== i && !silent) sfx('select');
     this.pick = i;
     this.cards[0].setStrokeStyle(2, i === 0 ? 0xffffff : 0x505060);
     this.cards[1].setStrokeStyle(2, i === 1 ? 0xffffff : 0x505060);
+    this.cards[0].setScale(i === 0 ? 1.04 : 1);
+    this.cards[1].setScale(i === 1 ? 1.04 : 1);
+    this.heroSprites[0].setScale(Math.abs(this.heroSprites[0].scaleX), this.heroSprites[0].scaleY);
+    this.heroSprites[1].setScale(Math.abs(this.heroSprites[1].scaleX), this.heroSprites[1].scaleY);
+    this.heroSprites[0].setTint(i === 0 ? 0xffffff : 0xb9b9d6);
+    this.heroSprites[1].setTint(i === 1 ? 0xffffff : 0xb9b9d6);
   }
-  tapHero(i) {
+  tapHero(i, pointer) {
+    tapRipple(this, pointer.worldX, pointer.worldY);
     this.setPick(i);
     this.start();
   }

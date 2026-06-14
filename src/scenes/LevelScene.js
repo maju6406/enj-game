@@ -31,6 +31,7 @@ export class LevelScene extends Phaser.Scene {
     this.score = data.score || 0;
     this.respawn = data.respawn || null;
     this.demo = !!data.demo;
+    this.cheatInfiniteLives = !!data.cheatInfiniteLives;
     this.dying = false;
     this.clearing = false;
     this.pausedByOverlay = false;
@@ -70,9 +71,11 @@ export class LevelScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys({
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      c: Phaser.Input.Keyboard.KeyCodes.C,
       p: Phaser.Input.Keyboard.KeyCodes.P,
       esc: Phaser.Input.Keyboard.KeyCodes.ESC,
     });
+    this.input.keyboard.on('keydown-C', () => this.toggleCheatMode());
 
     this.physics.add.collider(this.player.sprite, this.solids, (_player, block) => this.handleBlockBump(block));
     this.physics.add.collider(this.enemies, this.solids);
@@ -403,7 +406,7 @@ export class LevelScene extends Phaser.Scene {
   killPlayer(reason = 'damage') {
     if (this.dying) return;
     this.dying = true;
-    this.lives -= 1;
+    if (!this.cheatInfiniteLives) this.lives -= 1;
     this.nextRespawn = this.findRespawnPoint(reason);
     sfx('die');
     this.playDeathSequence();
@@ -413,16 +416,21 @@ export class LevelScene extends Phaser.Scene {
         this.scene.start('Cast', { attract: true });
         return;
       }
-      if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
-      else this.scene.start('Level', {
-        who: this.who,
-        levelIndex: this.levelIndex,
-        lives: this.lives,
-        relics: this.relics,
-        score: this.score,
-        respawn: this.nextRespawn,
-      });
+      if (this.lives <= 0 && !this.cheatInfiniteLives) this.scene.start('GameOver', { score: this.score });
+      else this.scene.start('Level', this.levelState({ respawn: this.nextRespawn }));
     });
+  }
+
+  levelState(overrides = {}) {
+    return {
+      who: this.who,
+      levelIndex: this.levelIndex,
+      lives: this.lives,
+      relics: this.relics,
+      score: this.score,
+      cheatInfiniteLives: this.cheatInfiniteLives,
+      ...overrides,
+    };
   }
 
   defaultSpawn() {
@@ -519,7 +527,7 @@ export class LevelScene extends Phaser.Scene {
 
     const banner = [
       this.add.rectangle(VIEW_W / 2, 91, 156, 24, 0x101020, 0.78).setScrollFactor(0).setDepth(95),
-      label(this, this.lives <= 0 ? 'FINAL LIFE LOST' : 'LOST A LIFE', VIEW_W / 2, 85, 10).setDepth(96),
+      label(this, this.cheatInfiniteLives ? 'CHEAT SAVE!' : this.lives <= 0 ? 'FINAL LIFE LOST' : 'LOST A LIFE', VIEW_W / 2, 85, 10).setDepth(96),
     ];
     this.cameras.main.ignore(banner);
     this.tweens.add({
@@ -554,7 +562,7 @@ export class LevelScene extends Phaser.Scene {
       }
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
-      else this.scene.start('Level', { who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
+      else this.scene.start('Level', this.levelState({ levelIndex: next, respawn: null }));
     });
   }
 
@@ -601,6 +609,33 @@ export class LevelScene extends Phaser.Scene {
       ...Object.values(this.hud).filter((entry) => !Array.isArray(entry)),
     ]);
     this.updateHud();
+  }
+
+  toggleCheatMode() {
+    if (this.demo) return;
+    this.cheatInfiniteLives = !this.cheatInfiniteLives;
+    sfx(this.cheatInfiniteLives ? 'power' : 'select');
+    this.updateHud();
+    this.showCheatBanner();
+  }
+
+  showCheatBanner() {
+    this.cheatBanner?.forEach((entry) => entry.destroy());
+    this.cheatBanner = [
+      this.add.rectangle(VIEW_W / 2, 55, 126, 20, this.cheatInfiniteLives ? 0x203050 : 0x101020, 0.78).setScrollFactor(0).setDepth(116).setStrokeStyle(1, this.cheatInfiniteLives ? 0xffd34d : 0xffffff),
+      label(this, this.cheatInfiniteLives ? 'CHEAT MODE ON' : 'CHEAT MODE OFF', VIEW_W / 2 - 52, 50, 7).setDepth(117),
+    ];
+    this.cameras.main.ignore(this.cheatBanner);
+    this.tweens.add({
+      targets: this.cheatBanner,
+      alpha: 0,
+      delay: 780,
+      duration: 300,
+      onComplete: () => {
+        this.cheatBanner?.forEach((entry) => entry.destroy());
+        this.cheatBanner = null;
+      },
+    });
   }
 
   createDemoHud() {
@@ -659,7 +694,12 @@ export class LevelScene extends Phaser.Scene {
     this.hud.relics.setText(`x${String(this.relics).padStart(2, '0')}`);
     this.hud.time.setText(`${Math.max(0, this.timeLeft | 0)}`);
     this.hud.time.setColor(this.timeLeft <= 60 && Math.floor(this.time.now / 250) % 2 === 0 ? '#ff6a6a' : '#ffffff');
-    this.hud.hearts.forEach((h, i) => h.setVisible(i < this.lives));
+    this.hud.livesLabel.setText(this.cheatInfiniteLives ? 'MAX' : 'LIVES');
+    this.hud.hearts.forEach((h, i) => {
+      h.setVisible(this.cheatInfiniteLives || i < this.lives);
+      if (this.cheatInfiniteLives) h.setTint(0xfff2c0);
+      else h.clearTint();
+    });
   }
 
   popRelic(x, y) {
@@ -800,7 +840,7 @@ export class LevelScene extends Phaser.Scene {
       label(this, 'UP / SPACE / JUMP HOPS', VIEW_W / 2 - 86, 106, 7).setDepth(121),
     ];
     const resume = this.pauseButton('RESUME', VIEW_W / 2 - 62, 136, () => this.closePauseOverlay());
-    const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score }));
+    const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', this.levelState({ respawn: null })));
     const title = this.pauseButton('TITLE', VIEW_W / 2 + 64, 136, () => this.scene.start('Title'));
     this.pauseOverlay = [...overlay, ...resume, ...restart, ...title];
     this.cameras.main.ignore(this.pauseOverlay);

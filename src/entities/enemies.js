@@ -109,9 +109,10 @@ export function stompEnemy(scene, e) {
   if (e.kind === 'boss') {
     if (scene.time.now < (e.invulnUntil || 0)) return false;
     e.hp -= 1;
-    e.invulnUntil = scene.time.now + 650;
+    e.invulnUntil = scene.time.now + 500;
     flashTint(scene, e, 0xffffff, 120);
     squash(scene, e, 0.12, 130);
+    scene.onBossDamaged?.(e);
     if (e.hp <= 0) {
       e.dead = true;
       e.disableBody(true, false);

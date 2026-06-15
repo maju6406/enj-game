@@ -31,6 +31,7 @@ export class LevelScene extends Phaser.Scene {
     this.score = data.score || 0;
     this.respawn = data.respawn || null;
     this.demo = !!data.demo;
+    this.cheatInfiniteLives = !!data.cheatInfiniteLives;
     this.dying = false;
     this.clearing = false;
     this.pausedByOverlay = false;
@@ -70,9 +71,11 @@ export class LevelScene extends Phaser.Scene {
     this.keys = this.input.keyboard.addKeys({
       space: Phaser.Input.Keyboard.KeyCodes.SPACE,
       enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
+      c: Phaser.Input.Keyboard.KeyCodes.C,
       p: Phaser.Input.Keyboard.KeyCodes.P,
       esc: Phaser.Input.Keyboard.KeyCodes.ESC,
     });
+    this.input.keyboard.on('keydown-C', () => this.toggleCheatMode());
 
     this.physics.add.collider(this.player.sprite, this.solids, (_player, block) => this.handleBlockBump(block));
     this.physics.add.collider(this.enemies, this.solids);
@@ -90,10 +93,14 @@ export class LevelScene extends Phaser.Scene {
       this.physics.add.overlap(this.player.sprite, this.flagZone, () => this.levelClear());
     }
 
-    for (const def of this.level.enemies) spawnEnemy(this, def);
+    for (const def of this.level.enemies) {
+      const enemy = spawnEnemy(this, def);
+      if (enemy.kind === 'boss') this.boss = enemy;
+    }
     this.uiCamera = this.cameras.add(0, 0, VIEW_W, VIEW_H).setScroll(0, 0).setZoom(1);
     this.uiCamera.ignore(this.children.list);
     this.createHud();
+    this.createBossHud();
     this.createTouchControls();
     this.createPauseControls();
     this.showLevelIntro();
@@ -123,6 +130,14 @@ export class LevelScene extends Phaser.Scene {
   addDecorations() {
     if (this.level.theme === 'underground' || this.level.theme === 'castle') return;
     const width = this.level.width * TILE;
+    for (let x = 20; x < width; x += 360) {
+      this.add.image(x, VIEW_H - 70, 'scenery-ridge')
+        .setOrigin(0.5, 1)
+        .setScrollFactor(0.12)
+        .setAlpha(0.74)
+        .setDepth(-24)
+        .setScale(1.25);
+    }
     for (let x = 40; x < width; x += 280) {
       this.add.image(x, Phaser.Math.Between(30, 84), 'scenery-cloud')
         .setScrollFactor(0.18)
@@ -135,13 +150,14 @@ export class LevelScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setScrollFactor(0.35)
         .setDepth(-15)
-        .setScale(Phaser.Math.FloatBetween(1, 1.6));
+        .setScale(Phaser.Math.FloatBetween(0.95, 1.35));
     }
     for (let x = 80; x < width; x += 210) {
       this.add.image(x, VIEW_H - 32, 'scenery-bush')
         .setOrigin(0.5, 1)
         .setScrollFactor(0.65)
-        .setDepth(-10);
+        .setDepth(-10)
+        .setScale(Phaser.Math.FloatBetween(0.95, 1.2));
     }
   }
 
@@ -353,7 +369,14 @@ export class LevelScene extends Phaser.Scene {
   touchEnemy(enemy) {
     if (!enemy.active || enemy.dead) return;
     const falling = this.player.sprite.body.velocity.y > 20;
-    const above = this.player.foot - enemy.y < enemy.displayHeight * 0.65;
+    const enemyTop = enemy.body?.top ?? enemy.y - enemy.displayHeight;
+    const stompGrace = enemy.kind === 'boss' ? 18 : 10;
+    const above = this.player.sprite.body.bottom <= enemyTop + stompGrace;
+    if (falling && above && enemy.kind === 'boss' && this.time.now < (enemy.invulnUntil || 0)) {
+      this.player.bounce(false);
+      this.addSparkle(enemy.x, enemyTop + 8, 0xffffff);
+      return;
+    }
     if (falling && above && stompEnemy(this, enemy)) {
       this.player.bounce(this.cursors.up.isDown || this.keys.space.isDown);
       sfx(enemy.kind === 'boss' ? 'hurt' : 'stomp');
@@ -403,7 +426,7 @@ export class LevelScene extends Phaser.Scene {
   killPlayer(reason = 'damage') {
     if (this.dying) return;
     this.dying = true;
-    this.lives -= 1;
+    if (!this.cheatInfiniteLives) this.lives -= 1;
     this.nextRespawn = this.findRespawnPoint(reason);
     sfx('die');
     this.playDeathSequence();
@@ -413,16 +436,21 @@ export class LevelScene extends Phaser.Scene {
         this.scene.start('Cast', { attract: true });
         return;
       }
-      if (this.lives <= 0) this.scene.start('GameOver', { score: this.score });
-      else this.scene.start('Level', {
-        who: this.who,
-        levelIndex: this.levelIndex,
-        lives: this.lives,
-        relics: this.relics,
-        score: this.score,
-        respawn: this.nextRespawn,
-      });
+      if (this.lives <= 0 && !this.cheatInfiniteLives) this.scene.start('GameOver', { score: this.score });
+      else this.scene.start('Level', this.levelState({ respawn: this.nextRespawn }));
     });
+  }
+
+  levelState(overrides = {}) {
+    return {
+      who: this.who,
+      levelIndex: this.levelIndex,
+      lives: this.lives,
+      relics: this.relics,
+      score: this.score,
+      cheatInfiniteLives: this.cheatInfiniteLives,
+      ...overrides,
+    };
   }
 
   defaultSpawn() {
@@ -519,7 +547,7 @@ export class LevelScene extends Phaser.Scene {
 
     const banner = [
       this.add.rectangle(VIEW_W / 2, 91, 156, 24, 0x101020, 0.78).setScrollFactor(0).setDepth(95),
-      label(this, this.lives <= 0 ? 'FINAL LIFE LOST' : 'LOST A LIFE', VIEW_W / 2, 85, 10).setDepth(96),
+      label(this, this.cheatInfiniteLives ? 'CHEAT SAVE!' : this.lives <= 0 ? 'FINAL LIFE LOST' : 'LOST A LIFE', VIEW_W / 2, 85, 10).setDepth(96),
     ];
     this.cameras.main.ignore(banner);
     this.tweens.add({
@@ -554,7 +582,7 @@ export class LevelScene extends Phaser.Scene {
       }
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
-      else this.scene.start('Level', { who: this.who, levelIndex: next, lives: this.lives, relics: this.relics, score: this.score });
+      else this.scene.start('Level', this.levelState({ levelIndex: next, respawn: null }));
     });
   }
 
@@ -569,6 +597,38 @@ export class LevelScene extends Phaser.Scene {
     this.time.delayedCall(500, () => this.scene.start('Win', { who: this.who, score: this.score }));
   }
 
+  createBossHud() {
+    if (!this.boss || !this.level.isBoss) return;
+    this.bossHud = [
+      this.add.rectangle(VIEW_W / 2, 50, 132, 24, 0x101020, 0.7).setScrollFactor(0).setDepth(58).setStrokeStyle(1, 0xff6a6a),
+      label(this, 'BIGFOOT', VIEW_W / 2 - 50, 44, 8).setDepth(59),
+      label(this, '3 HITS', VIEW_W / 2 + 12, 44, 8).setDepth(59),
+    ];
+    this.bossHudHearts = [];
+    for (let i = 0; i < 3; i++) {
+      this.bossHudHearts.push(this.add.image(VIEW_W / 2 + 21 + i * 12, 57, 'heart').setScrollFactor(0).setDepth(59).setTint(0xff6a6a));
+    }
+    this.cameras.main.ignore([...this.bossHud, ...this.bossHudHearts]);
+  }
+
+  onBossDamaged(boss) {
+    if (!boss?.active) return;
+    const hp = Math.max(0, boss.hp);
+    this.bossHudHearts?.forEach((heart, index) => {
+      heart.setVisible(index < hp);
+      this.tweens.add({
+        targets: heart,
+        scale: index < hp ? 1.25 : 0,
+        alpha: index < hp ? 1 : 0,
+        duration: 120,
+        yoyo: index < hp,
+        ease: 'Sine.easeInOut',
+      });
+    });
+    this.scorePop(boss.x, boss.y - boss.displayHeight - 8, hp > 0 ? `${hp} HITS LEFT` : 'BIGFOOT DOWN!');
+    if (hp > 0) this.showCenterBanner('BIGFOOT HIT!', `${hp} MORE TO WIN`);
+  }
+
   createHud() {
     this.hudPanels = [
       this.add.rectangle(58, 20, 106, 34, 0x101020, 0.62).setScrollFactor(0).setDepth(49).setStrokeStyle(1, 0xd9f3ff),
@@ -579,19 +639,19 @@ export class LevelScene extends Phaser.Scene {
     ];
     this.hud = {
       hearts: [],
-      score: label(this, '', 10, 18, 10),
-      relics: label(this, '', 98, 18, 10),
-      world: label(this, `1-${this.levelIndex + 1}`, 190, 18, 10),
-      time: label(this, '', 322, 18, 10),
-      name: label(this, this.level.name, 10, 34, 9),
-      scoreLabel: label(this, 'SCORE', 10, 6, 8),
-      relicLabel: label(this, 'RELICS', 98, 6, 8),
-      worldLabel: label(this, 'WORLD', 190, 6, 8),
-      livesLabel: label(this, 'LIVES', 254, 6, 8),
-      timeLabel: label(this, 'TIME', 322, 6, 8),
+      score: label(this, '', 58, 23, 10).setOrigin(0.5),
+      relics: label(this, '', 144, 23, 10).setOrigin(0.5),
+      world: label(this, `1-${this.levelIndex + 1}`, 218, 23, 10).setOrigin(0.5),
+      time: label(this, '', 355, 23, 10).setOrigin(0.5),
+      name: label(this, this.level.name, 58, 35, 6).setOrigin(0.5),
+      scoreLabel: label(this, 'SCORE', 58, 10, 8).setOrigin(0.5),
+      relicLabel: label(this, 'RELICS', 144, 10, 8).setOrigin(0.5),
+      worldLabel: label(this, 'WORLD', 218, 10, 8).setOrigin(0.5),
+      livesLabel: label(this, 'LIVES', 291, 10, 8).setOrigin(0.5),
+      timeLabel: label(this, 'TIME', 355, 10, 8).setOrigin(0.5),
     };
     for (let i = 0; i < 3; i++) {
-      const heart = this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50);
+      const heart = this.add.image(279 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50);
       loopPulse(this, heart, 1.08, 780, { delay: i * 90 });
       this.hud.hearts.push(heart);
     }
@@ -601,6 +661,33 @@ export class LevelScene extends Phaser.Scene {
       ...Object.values(this.hud).filter((entry) => !Array.isArray(entry)),
     ]);
     this.updateHud();
+  }
+
+  toggleCheatMode() {
+    if (this.demo) return;
+    this.cheatInfiniteLives = !this.cheatInfiniteLives;
+    sfx(this.cheatInfiniteLives ? 'power' : 'select');
+    this.updateHud();
+    this.showCheatBanner();
+  }
+
+  showCheatBanner() {
+    this.cheatBanner?.forEach((entry) => entry.destroy());
+    this.cheatBanner = [
+      this.add.rectangle(VIEW_W / 2, 55, 126, 20, this.cheatInfiniteLives ? 0x203050 : 0x101020, 0.78).setScrollFactor(0).setDepth(116).setStrokeStyle(1, this.cheatInfiniteLives ? 0xffd34d : 0xffffff),
+      label(this, this.cheatInfiniteLives ? 'CHEAT MODE ON' : 'CHEAT MODE OFF', VIEW_W / 2 - 52, 50, 7).setDepth(117),
+    ];
+    this.cameras.main.ignore(this.cheatBanner);
+    this.tweens.add({
+      targets: this.cheatBanner,
+      alpha: 0,
+      delay: 780,
+      duration: 300,
+      onComplete: () => {
+        this.cheatBanner?.forEach((entry) => entry.destroy());
+        this.cheatBanner = null;
+      },
+    });
   }
 
   createDemoHud() {
@@ -619,7 +706,7 @@ export class LevelScene extends Phaser.Scene {
         .setDepth(90)
         .setStrokeStyle(2, fill)
         .setInteractive({ useHandCursor: true });
-      const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setDepth(91);
+      const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setOrigin(0.5).setDepth(91);
       button.on('pointerdown', onDown);
       button.on('pointerup', onUp);
       button.on('pointerout', onUp);
@@ -638,12 +725,12 @@ export class LevelScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-P', () => this.togglePauseOverlay());
     this.input.keyboard.on('keydown-ESC', () => this.togglePauseOverlay());
     if (!window.matchMedia?.('(pointer: coarse)').matches) return;
-    const button = this.add.rectangle(VIEW_W - 22, 56, 34, 22, 0x101020, 0.62)
+    const button = this.add.rectangle(VIEW_W - 32, 56, 54, 22, 0x101020, 0.62)
       .setScrollFactor(0)
       .setDepth(92)
       .setStrokeStyle(1, 0xffffff)
       .setInteractive({ useHandCursor: true });
-    const glyph = label(this, 'II', VIEW_W - 27, 51, 8).setDepth(93);
+    const glyph = label(this, 'PAUSE', VIEW_W - 32, 55, 6).setOrigin(0.5).setDepth(93);
     button.on('pointerup', () => this.togglePauseOverlay());
     this.cameras.main.ignore([button, glyph]);
   }
@@ -659,7 +746,12 @@ export class LevelScene extends Phaser.Scene {
     this.hud.relics.setText(`x${String(this.relics).padStart(2, '0')}`);
     this.hud.time.setText(`${Math.max(0, this.timeLeft | 0)}`);
     this.hud.time.setColor(this.timeLeft <= 60 && Math.floor(this.time.now / 250) % 2 === 0 ? '#ff6a6a' : '#ffffff');
-    this.hud.hearts.forEach((h, i) => h.setVisible(i < this.lives));
+    this.hud.livesLabel.setText(this.cheatInfiniteLives ? 'MAX' : 'LIVES');
+    this.hud.hearts.forEach((h, i) => {
+      h.setVisible(this.cheatInfiniteLives || i < this.lives);
+      if (this.cheatInfiniteLives) h.setTint(0xfff2c0);
+      else h.clearTint();
+    });
   }
 
   popRelic(x, y) {
@@ -800,7 +892,7 @@ export class LevelScene extends Phaser.Scene {
       label(this, 'UP / SPACE / JUMP HOPS', VIEW_W / 2 - 86, 106, 7).setDepth(121),
     ];
     const resume = this.pauseButton('RESUME', VIEW_W / 2 - 62, 136, () => this.closePauseOverlay());
-    const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', { who: this.who, levelIndex: this.levelIndex, lives: this.lives, relics: this.relics, score: this.score }));
+    const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', this.levelState({ respawn: null })));
     const title = this.pauseButton('TITLE', VIEW_W / 2 + 64, 136, () => this.scene.start('Title'));
     this.pauseOverlay = [...overlay, ...resume, ...restart, ...title];
     this.cameras.main.ignore(this.pauseOverlay);

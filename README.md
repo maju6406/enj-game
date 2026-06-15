@@ -37,4 +37,4 @@ Then open the local Vite URL shown in the terminal.
 npm run build
 ```
 
-## Thanks for comign!
+## Thanks for coming!

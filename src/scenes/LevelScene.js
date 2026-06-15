@@ -609,15 +609,18 @@ export class LevelScene extends Phaser.Scene {
   }
 
   launchGoalFireworks() {
-    const startX = this.level.flagX * TILE;
+    const view = this.cameras.main.worldView;
+    const minX = view.x + 34;
+    const maxX = view.right - 34;
     const bursts = [
-      [startX - 42, 74, 0xffd34d],
-      [startX + 36, 58, 0x7ad6ff],
-      [startX - 18, 44, 0xff6a8a],
-      [startX + 58, 86, 0xfff2c0],
+      [Phaser.Math.Linear(minX, maxX, 0.28), 62, 0xffd34d],
+      [Phaser.Math.Linear(minX, maxX, 0.72), 44, 0x7ad6ff],
+      [Phaser.Math.Linear(minX, maxX, 0.48), 82, 0xff6a8a],
+      [Phaser.Math.Linear(minX, maxX, 0.86), 70, 0xfff2c0],
+      [Phaser.Math.Linear(minX, maxX, 0.16), 50, 0x9adf4a],
     ];
     bursts.forEach(([x, y, color], index) => {
-      this.time.delayedCall(180 + index * 190, () => this.addFirework(x, y, color));
+      this.time.delayedCall(index * 180, () => this.addFirework(x, y, color));
     });
   }
 
@@ -833,7 +836,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   addFirework(x, y, color) {
-    const core = this.ignoreUi(this.add.circle(x, y, 3, color, 0.95).setDepth(37));
+    const core = this.ignoreUi(this.add.circle(x, y, 5, color, 0.95).setDepth(72));
     this.tweens.add({
       targets: core,
       scale: 0,
@@ -842,10 +845,10 @@ export class LevelScene extends Phaser.Scene {
       ease: 'Quad.easeOut',
       onComplete: () => core.destroy(),
     });
-    for (let i = 0; i < 14; i++) {
-      const angle = (Math.PI * 2 * i) / 14;
-      const distance = 18 + (i % 3) * 5;
-      const spark = this.ignoreUi(this.add.star(x, y, 4, 1, 4, color, 0.95).setDepth(37));
+    for (let i = 0; i < 20; i++) {
+      const angle = (Math.PI * 2 * i) / 20;
+      const distance = 26 + (i % 4) * 5;
+      const spark = this.ignoreUi(this.add.star(x, y, 5, 1, 5, color, 0.95).setDepth(72));
       this.tweens.add({
         targets: spark,
         x: x + Math.cos(angle) * distance,
@@ -853,7 +856,7 @@ export class LevelScene extends Phaser.Scene {
         angle: Phaser.Math.RadToDeg(angle) + 180,
         scale: 0,
         alpha: 0,
-        duration: 560,
+        duration: 720,
         ease: 'Quad.easeOut',
         onComplete: () => spark.destroy(),
       });

@@ -630,19 +630,19 @@ export class LevelScene extends Phaser.Scene {
     ];
     this.hud = {
       hearts: [],
-      score: label(this, '', 10, 18, 10),
-      relics: label(this, '', 98, 18, 10),
-      world: label(this, `1-${this.levelIndex + 1}`, 190, 18, 10),
-      time: label(this, '', 322, 18, 10),
-      name: label(this, this.level.name, 10, 34, 9),
-      scoreLabel: label(this, 'SCORE', 10, 6, 8),
-      relicLabel: label(this, 'RELICS', 98, 6, 8),
-      worldLabel: label(this, 'WORLD', 190, 6, 8),
-      livesLabel: label(this, 'LIVES', 254, 6, 8),
-      timeLabel: label(this, 'TIME', 322, 6, 8),
+      score: label(this, '', 58, 23, 10).setOrigin(0.5),
+      relics: label(this, '', 144, 23, 10).setOrigin(0.5),
+      world: label(this, `1-${this.levelIndex + 1}`, 218, 23, 10).setOrigin(0.5),
+      time: label(this, '', 355, 23, 10).setOrigin(0.5),
+      name: label(this, this.level.name, 58, 35, 6).setOrigin(0.5),
+      scoreLabel: label(this, 'SCORE', 58, 10, 8).setOrigin(0.5),
+      relicLabel: label(this, 'RELICS', 144, 10, 8).setOrigin(0.5),
+      worldLabel: label(this, 'WORLD', 218, 10, 8).setOrigin(0.5),
+      livesLabel: label(this, 'LIVES', 291, 10, 8).setOrigin(0.5),
+      timeLabel: label(this, 'TIME', 355, 10, 8).setOrigin(0.5),
     };
     for (let i = 0; i < 3; i++) {
-      const heart = this.add.image(254 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50);
+      const heart = this.add.image(279 + i * 12, 23, 'heart').setScrollFactor(0).setDepth(50);
       loopPulse(this, heart, 1.08, 780, { delay: i * 90 });
       this.hud.hearts.push(heart);
     }
@@ -697,7 +697,7 @@ export class LevelScene extends Phaser.Scene {
         .setDepth(90)
         .setStrokeStyle(2, fill)
         .setInteractive({ useHandCursor: true });
-      const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setDepth(91);
+      const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setOrigin(0.5).setDepth(91);
       button.on('pointerdown', onDown);
       button.on('pointerup', onUp);
       button.on('pointerout', onUp);
@@ -721,7 +721,7 @@ export class LevelScene extends Phaser.Scene {
       .setDepth(92)
       .setStrokeStyle(1, 0xffffff)
       .setInteractive({ useHandCursor: true });
-    const glyph = label(this, 'PAUSE', VIEW_W - 50, 51, 6).setDepth(93);
+    const glyph = label(this, 'PAUSE', VIEW_W - 32, 55, 6).setOrigin(0.5).setDepth(93);
     button.on('pointerup', () => this.togglePauseOverlay());
     this.cameras.main.ignore([button, glyph]);
   }

@@ -93,10 +93,14 @@ export class LevelScene extends Phaser.Scene {
       this.physics.add.overlap(this.player.sprite, this.flagZone, () => this.levelClear());
     }
 
-    for (const def of this.level.enemies) spawnEnemy(this, def);
+    for (const def of this.level.enemies) {
+      const enemy = spawnEnemy(this, def);
+      if (enemy.kind === 'boss') this.boss = enemy;
+    }
     this.uiCamera = this.cameras.add(0, 0, VIEW_W, VIEW_H).setScroll(0, 0).setZoom(1);
     this.uiCamera.ignore(this.children.list);
     this.createHud();
+    this.createBossHud();
     this.createTouchControls();
     this.createPauseControls();
     this.showLevelIntro();
@@ -356,7 +360,14 @@ export class LevelScene extends Phaser.Scene {
   touchEnemy(enemy) {
     if (!enemy.active || enemy.dead) return;
     const falling = this.player.sprite.body.velocity.y > 20;
-    const above = this.player.foot - enemy.y < enemy.displayHeight * 0.65;
+    const enemyTop = enemy.body?.top ?? enemy.y - enemy.displayHeight;
+    const stompGrace = enemy.kind === 'boss' ? 18 : 10;
+    const above = this.player.sprite.body.bottom <= enemyTop + stompGrace;
+    if (falling && above && enemy.kind === 'boss' && this.time.now < (enemy.invulnUntil || 0)) {
+      this.player.bounce(false);
+      this.addSparkle(enemy.x, enemyTop + 8, 0xffffff);
+      return;
+    }
     if (falling && above && stompEnemy(this, enemy)) {
       this.player.bounce(this.cursors.up.isDown || this.keys.space.isDown);
       sfx(enemy.kind === 'boss' ? 'hurt' : 'stomp');
@@ -575,6 +586,38 @@ export class LevelScene extends Phaser.Scene {
     this.scorePop(this.player.sprite.x, this.player.sprite.y - 48, `BOSS ${SCORE.bossDefeat}`);
     this.showCenterBanner('BIGFOOT CATALOGED!', `BOSS BONUS ${SCORE.bossDefeat}`);
     this.time.delayedCall(500, () => this.scene.start('Win', { who: this.who, score: this.score }));
+  }
+
+  createBossHud() {
+    if (!this.boss || !this.level.isBoss) return;
+    this.bossHud = [
+      this.add.rectangle(VIEW_W / 2, 50, 132, 24, 0x101020, 0.7).setScrollFactor(0).setDepth(58).setStrokeStyle(1, 0xff6a6a),
+      label(this, 'BIGFOOT', VIEW_W / 2 - 50, 44, 8).setDepth(59),
+      label(this, '3 HITS', VIEW_W / 2 + 12, 44, 8).setDepth(59),
+    ];
+    this.bossHudHearts = [];
+    for (let i = 0; i < 3; i++) {
+      this.bossHudHearts.push(this.add.image(VIEW_W / 2 + 21 + i * 12, 57, 'heart').setScrollFactor(0).setDepth(59).setTint(0xff6a6a));
+    }
+    this.cameras.main.ignore([...this.bossHud, ...this.bossHudHearts]);
+  }
+
+  onBossDamaged(boss) {
+    if (!boss?.active) return;
+    const hp = Math.max(0, boss.hp);
+    this.bossHudHearts?.forEach((heart, index) => {
+      heart.setVisible(index < hp);
+      this.tweens.add({
+        targets: heart,
+        scale: index < hp ? 1.25 : 0,
+        alpha: index < hp ? 1 : 0,
+        duration: 120,
+        yoyo: index < hp,
+        ease: 'Sine.easeInOut',
+      });
+    });
+    this.scorePop(boss.x, boss.y - boss.displayHeight - 8, hp > 0 ? `${hp} HITS LEFT` : 'BIGFOOT DOWN!');
+    if (hp > 0) this.showCenterBanner('BIGFOOT HIT!', `${hp} MORE TO WIN`);
   }
 
   createHud() {

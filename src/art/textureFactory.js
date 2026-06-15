@@ -35,7 +35,8 @@ function tile(scene, key, base, light, dark, accent = null) {
 }
 
 function groundTile(scene) {
-  const [c, ctx] = canvas(TILE, TILE);
+  let c, ctx;
+  [c, ctx] = canvas(TILE, TILE);
   rect(ctx, 0, 0, TILE, 4, '#58a840');
   rect(ctx, 0, 4, TILE, 3, '#2d6c2d');
   rect(ctx, 0, 7, TILE, 9, '#7c5a28');
@@ -50,6 +51,18 @@ function groundTile(scene) {
   rect(ctx, 3, 7, 2, 7, '#4f3218');
   rect(ctx, 5, 12, 6, 1, '#4f3218');
   add(scene, 'tile-ground', c);
+
+  [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, TILE, '#7c5a28');
+  rect(ctx, 0, 0, TILE, 2, '#b98b3c');
+  rect(ctx, 0, 14, TILE, 2, '#352010');
+  rect(ctx, 1, 2, 3, 3, '#9b6d32');
+  rect(ctx, 10, 5, 3, 2, '#5b3b1d');
+  rect(ctx, 5, 10, 4, 3, '#a87638');
+  rect(ctx, 12, 9, 2, 5, '#3f2812');
+  rect(ctx, 3, 0, 2, 12, '#4f3218');
+  rect(ctx, 5, 8, 6, 1, '#4f3218');
+  add(scene, 'tile-ground-fill', c);
 }
 
 function hazard(scene, key, color) {

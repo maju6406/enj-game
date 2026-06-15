@@ -192,7 +192,8 @@ export class LevelScene extends Phaser.Scene {
             ease: 'Sine.easeInOut',
           });
         } else if (SOLID.has(ch)) {
-          const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, TILE_KEY[ch] || 'tile-block'));
+          const key = ch === '#' && this.tileAt(x, y - 1) === '#' ? 'tile-ground-fill' : TILE_KEY[ch] || 'tile-block';
+          const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, key));
           s.setData('tile', { x, y, ch });
           this.blockSprites.set(`${x},${y}`, s);
           this.animateBlockAmbient(s, ch, x, y);

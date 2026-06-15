@@ -34,6 +34,24 @@ function tile(scene, key, base, light, dark, accent = null) {
   add(scene, key, c);
 }
 
+function groundTile(scene) {
+  const [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, 4, '#58a840');
+  rect(ctx, 0, 4, TILE, 3, '#2d6c2d');
+  rect(ctx, 0, 7, TILE, 9, '#7c5a28');
+  rect(ctx, 0, 7, TILE, 2, '#b98b3c');
+  rect(ctx, 0, 14, TILE, 2, '#352010');
+  rect(ctx, 2, 1, 4, 2, '#86d65a');
+  rect(ctx, 9, 2, 5, 2, '#76c84d');
+  rect(ctx, 1, 9, 3, 3, '#9b6d32');
+  rect(ctx, 10, 11, 3, 2, '#5b3b1d');
+  rect(ctx, 5, 13, 4, 2, '#a87638');
+  rect(ctx, 12, 12, 2, 4, '#3f2812');
+  rect(ctx, 3, 7, 2, 7, '#4f3218');
+  rect(ctx, 5, 12, 6, 1, '#4f3218');
+  add(scene, 'tile-ground', c);
+}
+
 function hazard(scene, key, color) {
   const [c, ctx] = canvas(TILE, TILE);
   rect(ctx, 0, 12, TILE, 4, '#301020');
@@ -222,28 +240,49 @@ function hud(scene) {
 function scenery(scene) {
   let c, ctx;
 
-  [c, ctx] = canvas(48, 22);
-  rect(ctx, 8, 10, 30, 8, '#ffffff');
-  rect(ctx, 14, 5, 12, 8, '#ffffff');
-  rect(ctx, 25, 7, 12, 9, '#ffffff');
-  rect(ctx, 2, 14, 42, 5, '#d9f3ff');
-  rect(ctx, 10, 18, 24, 2, '#9bc8f0');
+  [c, ctx] = canvas(56, 22);
+  rect(ctx, 2, 14, 48, 6, '#9bc8f0');
+  rect(ctx, 7, 10, 38, 8, '#d9f3ff');
+  rect(ctx, 12, 5, 13, 10, '#ffffff');
+  rect(ctx, 23, 3, 16, 12, '#ffffff');
+  rect(ctx, 36, 8, 18, 8, '#ffffff');
+  rect(ctx, 14, 18, 24, 2, '#79afe1');
   add(scene, 'scenery-cloud', c);
 
-  [c, ctx] = canvas(72, 36);
-  ctx.fillStyle = '#4c9f44';
+  [c, ctx] = canvas(128, 52);
+  ctx.fillStyle = '#6ca8e7';
   ctx.beginPath();
-  ctx.moveTo(0, 36); ctx.lineTo(18, 10); ctx.lineTo(36, 30); ctx.lineTo(54, 6); ctx.lineTo(72, 36);
+  ctx.moveTo(0, 52); ctx.lineTo(28, 12); ctx.lineTo(60, 52); ctx.lineTo(92, 20); ctx.lineTo(128, 52);
   ctx.closePath(); ctx.fill();
-  rect(ctx, 17, 14, 3, 3, '#2d6c2d');
-  rect(ctx, 53, 10, 3, 3, '#2d6c2d');
+  rect(ctx, 28, 22, 4, 4, '#4d84cb');
+  rect(ctx, 92, 29, 4, 4, '#4d84cb');
+  ctx.fillStyle = '#3e8bd2';
+  ctx.beginPath();
+  ctx.moveTo(10, 52); ctx.lineTo(48, 22); ctx.lineTo(78, 52); ctx.lineTo(108, 30); ctx.lineTo(128, 52);
+  ctx.closePath(); ctx.fill();
+  rect(ctx, 49, 31, 4, 4, '#2c66a8');
+  add(scene, 'scenery-ridge', c);
+
+  [c, ctx] = canvas(104, 40);
+  ctx.fillStyle = '#2d8d3a';
+  ctx.beginPath();
+  ctx.moveTo(0, 40); ctx.lineTo(20, 15); ctx.lineTo(44, 35); ctx.lineTo(70, 8); ctx.lineTo(104, 40);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = '#56c44e';
+  ctx.beginPath();
+  ctx.moveTo(4, 40); ctx.lineTo(20, 20); ctx.lineTo(43, 37); ctx.lineTo(69, 14); ctx.lineTo(100, 40);
+  ctx.closePath(); ctx.fill();
+  rect(ctx, 20, 21, 3, 3, '#2d6c2d');
+  rect(ctx, 69, 17, 4, 4, '#2d6c2d');
   add(scene, 'scenery-hills', c);
 
-  [c, ctx] = canvas(42, 18);
-  rect(ctx, 2, 10, 38, 6, '#1d6b2c');
-  rect(ctx, 7, 5, 12, 10, '#2ea043');
-  rect(ctx, 18, 3, 14, 12, '#34b455');
-  rect(ctx, 30, 7, 8, 8, '#2ea043');
+  [c, ctx] = canvas(56, 18);
+  rect(ctx, 0, 10, 54, 7, '#14551f');
+  rect(ctx, 4, 6, 18, 10, '#23893a');
+  rect(ctx, 18, 2, 21, 14, '#34b455');
+  rect(ctx, 38, 7, 13, 9, '#2ea043');
+  rect(ctx, 13, 7, 5, 2, '#73e071');
+  rect(ctx, 30, 6, 6, 2, '#73e071');
   add(scene, 'scenery-bush', c);
 }
 
@@ -264,7 +303,7 @@ export function fallbackHeroTextures(scene) {
 }
 
 export function generateTextures(scene) {
-  tile(scene, 'tile-ground', '#7c5a28', '#b98b3c', '#352010', '#5ea63e');
+  groundTile(scene);
   tile(scene, 'tile-block', '#8b5a2b', '#d69249', '#43230d');
   tile(scene, 'tile-brick', '#a04d22', '#e29b58', '#4a1f0c');
   questionTile(scene);

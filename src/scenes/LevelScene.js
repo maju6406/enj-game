@@ -130,6 +130,14 @@ export class LevelScene extends Phaser.Scene {
   addDecorations() {
     if (this.level.theme === 'underground' || this.level.theme === 'castle') return;
     const width = this.level.width * TILE;
+    for (let x = 20; x < width; x += 360) {
+      this.add.image(x, VIEW_H - 70, 'scenery-ridge')
+        .setOrigin(0.5, 1)
+        .setScrollFactor(0.12)
+        .setAlpha(0.74)
+        .setDepth(-24)
+        .setScale(1.25);
+    }
     for (let x = 40; x < width; x += 280) {
       this.add.image(x, Phaser.Math.Between(30, 84), 'scenery-cloud')
         .setScrollFactor(0.18)
@@ -142,13 +150,14 @@ export class LevelScene extends Phaser.Scene {
         .setOrigin(0.5, 1)
         .setScrollFactor(0.35)
         .setDepth(-15)
-        .setScale(Phaser.Math.FloatBetween(1, 1.6));
+        .setScale(Phaser.Math.FloatBetween(0.95, 1.35));
     }
     for (let x = 80; x < width; x += 210) {
       this.add.image(x, VIEW_H - 32, 'scenery-bush')
         .setOrigin(0.5, 1)
         .setScrollFactor(0.65)
-        .setDepth(-10);
+        .setDepth(-10)
+        .setScale(Phaser.Math.FloatBetween(0.95, 1.2));
     }
   }
 

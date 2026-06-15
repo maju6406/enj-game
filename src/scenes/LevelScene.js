@@ -716,12 +716,12 @@ export class LevelScene extends Phaser.Scene {
     this.input.keyboard.on('keydown-P', () => this.togglePauseOverlay());
     this.input.keyboard.on('keydown-ESC', () => this.togglePauseOverlay());
     if (!window.matchMedia?.('(pointer: coarse)').matches) return;
-    const button = this.add.rectangle(VIEW_W - 22, 56, 34, 22, 0x101020, 0.62)
+    const button = this.add.rectangle(VIEW_W - 32, 56, 54, 22, 0x101020, 0.62)
       .setScrollFactor(0)
       .setDepth(92)
       .setStrokeStyle(1, 0xffffff)
       .setInteractive({ useHandCursor: true });
-    const glyph = label(this, 'II', VIEW_W - 27, 51, 8).setDepth(93);
+    const glyph = label(this, 'PAUSE', VIEW_W - 50, 51, 6).setDepth(93);
     button.on('pointerup', () => this.togglePauseOverlay());
     this.cameras.main.ignore([button, glyph]);
   }

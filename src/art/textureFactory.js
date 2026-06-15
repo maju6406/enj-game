@@ -297,6 +297,30 @@ function scenery(scene) {
   rect(ctx, 13, 7, 5, 2, '#73e071');
   rect(ctx, 30, 6, 6, 2, '#73e071');
   add(scene, 'scenery-bush', c);
+
+  [c, ctx] = canvas(66, 58);
+  rect(ctx, 6, 20, 54, 36, '#5b5d72');
+  rect(ctx, 9, 23, 48, 31, '#8d91aa');
+  rect(ctx, 6, 18, 54, 5, '#c7cbe2');
+  rect(ctx, 5, 14, 9, 8, '#5b5d72');
+  rect(ctx, 21, 12, 9, 10, '#5b5d72');
+  rect(ctx, 36, 12, 9, 10, '#5b5d72');
+  rect(ctx, 52, 14, 9, 8, '#5b5d72');
+  rect(ctx, 5, 12, 9, 3, '#c7cbe2');
+  rect(ctx, 21, 10, 9, 3, '#c7cbe2');
+  rect(ctx, 36, 10, 9, 3, '#c7cbe2');
+  rect(ctx, 52, 12, 9, 3, '#c7cbe2');
+  rect(ctx, 16, 30, 8, 8, '#27283a');
+  rect(ctx, 42, 30, 8, 8, '#27283a');
+  rect(ctx, 29, 39, 12, 17, '#27283a');
+  rect(ctx, 31, 41, 8, 15, '#171827');
+  rect(ctx, 10, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 27, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 44, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 10, 45, 7, 2, '#70758d');
+  rect(ctx, 48, 45, 7, 2, '#70758d');
+  rect(ctx, 6, 54, 54, 4, '#3d4054');
+  add(scene, 'scenery-castle', c);
 }
 
 export function fallbackHeroTextures(scene) {

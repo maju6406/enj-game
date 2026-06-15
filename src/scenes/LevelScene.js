@@ -89,6 +89,7 @@ export class LevelScene extends Phaser.Scene {
     if (this.level.flagX != null) {
       this.flag = this.add.rectangle(this.level.flagX * TILE, 96, 4, 112, 0xffffff).setOrigin(0, 0).setDepth(4);
       this.goalFlag = this.createGoalFlag(this.level.flagX * TILE + 4, 102);
+      this.goalCastle = this.add.image(this.level.flagX * TILE + 64, 208, 'scenery-castle').setOrigin(0.5, 1).setDepth(3);
       this.flagZone = this.add.zone(this.level.flagX * TILE, 0, 24, VIEW_H).setOrigin(0, 0);
       this.physics.add.existing(this.flagZone, true);
       this.physics.add.overlap(this.player.sprite, this.flagZone, () => this.levelClear());
@@ -585,9 +586,10 @@ export class LevelScene extends Phaser.Scene {
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     if (timeBonus > 0) this.scorePop(this.player.sprite.x, this.player.sprite.y - 44, `TIME ${timeBonus}`);
     this.lowerGoalFlag();
+    this.walkHeroIntoCastle();
     this.launchGoalFireworks();
     this.showCenterBanner('LEVEL CLEAR!', `TIME BONUS ${timeBonus}`);
-    this.time.delayedCall(1500, () => {
+    this.time.delayedCall(3600, () => {
       if (this.demo) {
         this.scene.start('Cast', { attract: true });
         return;
@@ -609,18 +611,44 @@ export class LevelScene extends Phaser.Scene {
   }
 
   launchGoalFireworks() {
-    const view = this.cameras.main.worldView;
-    const minX = view.x + 34;
-    const maxX = view.right - 34;
+    const centerX = this.goalCastle?.x || this.player.sprite.x;
+    const minX = centerX - 50;
+    const maxX = centerX + 50;
     const bursts = [
-      [Phaser.Math.Linear(minX, maxX, 0.28), 62, 0xffd34d],
-      [Phaser.Math.Linear(minX, maxX, 0.72), 44, 0x7ad6ff],
+      [Phaser.Math.Linear(minX, maxX, 0.25), 68, 0xffd34d],
+      [Phaser.Math.Linear(minX, maxX, 0.72), 48, 0x7ad6ff],
       [Phaser.Math.Linear(minX, maxX, 0.48), 82, 0xff6a8a],
-      [Phaser.Math.Linear(minX, maxX, 0.86), 70, 0xfff2c0],
-      [Phaser.Math.Linear(minX, maxX, 0.16), 50, 0x9adf4a],
+      [Phaser.Math.Linear(minX, maxX, 0.88), 70, 0xfff2c0],
+      [Phaser.Math.Linear(minX, maxX, 0.14), 54, 0x9adf4a],
+      [Phaser.Math.Linear(minX, maxX, 0.62), 38, 0xb06ad8],
+      [Phaser.Math.Linear(minX, maxX, 0.35), 58, 0xffffff],
     ];
     bursts.forEach(([x, y, color], index) => {
-      this.time.delayedCall(index * 180, () => this.addFirework(x, y, color));
+      this.time.delayedCall(420 + index * 360, () => this.addFirework(x, y, color));
+    });
+  }
+
+  walkHeroIntoCastle() {
+    if (!this.goalCastle || !this.player?.sprite) return;
+    const hero = this.player.sprite;
+    hero.body.enable = false;
+    hero.setVelocity(0, 0);
+    hero.setAcceleration(0, 0);
+    hero.setFlipX(false);
+    hero.setDepth(6);
+    this.tweens.add({
+      targets: hero,
+      x: this.goalCastle.x,
+      duration: 1050,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: hero,
+          alpha: 0,
+          duration: 260,
+          ease: 'Quad.easeIn',
+        });
+      },
     });
   }
 

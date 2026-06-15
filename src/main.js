@@ -55,15 +55,18 @@ function isFullscreenLike() {
 
 function viewportSize() {
   const viewport = window.visualViewport;
-  if (isIOS && !isStandalone && screen?.width && screen?.height) {
+  const visualWidth = Math.max(1, Math.floor(viewport?.width || window.innerWidth));
+  const visualHeight = Math.max(1, Math.floor(viewport?.height || window.innerHeight));
+  const isLandscape = visualWidth > visualHeight;
+  if (isIOS && !isStandalone && isLandscape && screen?.width && screen?.height) {
     return {
       width: Math.max(1, Math.max(screen.width, screen.height)),
       height: Math.max(1, Math.min(screen.width, screen.height)),
     };
   }
   return {
-    width: Math.max(1, Math.floor(viewport?.width || window.innerWidth)),
-    height: Math.max(1, Math.floor(viewport?.height || window.innerHeight)),
+    width: visualWidth,
+    height: visualHeight,
   };
 }
 

@@ -77,6 +77,30 @@ html.ios-browser #game-wrap {
   text-align: center;
 }
 
+#game-tagline {
+  margin: 2px 0 0;
+  color: #b9b9d6;
+  font-size: 7px;
+  line-height: 1.7;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+
+#game-tagline span {
+  color: #ff6a8a;
+}
+
+#game-tagline a {
+  color: #ffe060;
+  text-decoration: none;
+}
+
+#game-tagline a:hover,
+#game-tagline a:focus-visible {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
 #ios-fullscreen-tip {
   display: none;
   position: fixed;
@@ -150,7 +174,15 @@ body.fullscreen-fallback #game {
   display: none;
 }
 
+#game-wrap:fullscreen #game-tagline {
+  display: none;
+}
+
 body.fullscreen-fallback #overlay-hint {
+  display: none;
+}
+
+body.fullscreen-fallback #game-tagline {
   display: none;
 }
 
@@ -176,6 +208,10 @@ body.fullscreen-fallback #ios-fullscreen-tip {
   }
 
   #overlay-hint {
+    display: none;
+  }
+
+  #game-tagline {
     display: none;
   }
 }

@@ -60,6 +60,7 @@ export class LevelScene extends Phaser.Scene {
     this.enemies = this.physics.add.group();
     this.blockSprites = new Map();
     this.touch = { left: false, right: false, jump: false };
+    this.touchPointers = { left: new Set(), right: new Set(), jump: new Set() };
     this.addDecorations();
     this.buildWorld();
 
@@ -798,23 +799,48 @@ export class LevelScene extends Phaser.Scene {
 
   createTouchControls() {
     if (!this.isTouchLayout()) return;
-    const makeButton = (x, y, text, fill, onDown, onUp, width = 42) => {
+    this.input.addPointer?.(4);
+    const updateTouchState = (action) => {
+      this.touch[action] = this.touchPointers[action].size > 0;
+    };
+    const releasePointer = (pointer) => {
+      for (const action of Object.keys(this.touchPointers)) {
+        this.touchPointers[action].delete(pointer.id);
+        updateTouchState(action);
+      }
+    };
+    this.input.on('pointerup', releasePointer);
+    this.input.on('pointercancel', releasePointer);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.off('pointerup', releasePointer);
+      this.input.off('pointercancel', releasePointer);
+    });
+    const makeButton = (x, y, text, fill, action, width = 42) => {
       const button = this.add.rectangle(x, y, width, 36, fill, 0.28)
         .setScrollFactor(0)
         .setDepth(90)
         .setStrokeStyle(2, fill)
         .setInteractive({ useHandCursor: true });
       const glyph = label(this, text, x, y - 1, text.length > 1 ? 7 : 16).setOrigin(0.5).setDepth(91);
-      button.on('pointerdown', onDown);
-      button.on('pointerup', onUp);
-      button.on('pointerout', onUp);
+      const press = (pointer) => {
+        this.touchPointers[action].add(pointer.id);
+        updateTouchState(action);
+      };
+      const release = (pointer) => {
+        this.touchPointers[action].delete(pointer.id);
+        updateTouchState(action);
+      };
+      button.on('pointerdown', press);
+      button.on('pointerup', release);
+      button.on('pointerupoutside', release);
+      button.on('pointerout', release);
       this.cameras.main.ignore([button, glyph]);
       return [button, glyph];
     };
-    makeButton(37, VIEW_H - 28, 'LEFT', 0xffffff, () => { this.touch.left = true; }, () => { this.touch.left = false; }, 56);
-    makeButton(100, VIEW_H - 28, 'RIGHT', 0xffffff, () => { this.touch.right = true; }, () => { this.touch.right = false; }, 58);
-    makeButton(VIEW_W - 47, VIEW_H - 28, 'JUMP', 0xffd34d, () => { this.touch.jump = true; }, () => { this.touch.jump = false; }, 64);
-    const hint = label(this, 'LEFT/RIGHT MOVE - JUMP HOPS', VIEW_W / 2 - 92, VIEW_H - 49, 6).setDepth(91);
+    makeButton(38, VIEW_H - 28, 'LEFT', 0xffffff, 'left', 64);
+    makeButton(110, VIEW_H - 28, 'RIGHT', 0xffffff, 'right', 76);
+    makeButton(VIEW_W - 55, VIEW_H - 28, 'JUMP', 0xffd34d, 'jump', 82);
+    const hint = label(this, 'HOLD LEFT/RIGHT + TAP JUMP', VIEW_W / 2 - 88, VIEW_H - 49, 6).setDepth(91);
     this.cameras.main.ignore(hint);
     this.tweens.add({ targets: hint, alpha: 0, delay: 2600, duration: 600, onComplete: () => hint.destroy() });
   }

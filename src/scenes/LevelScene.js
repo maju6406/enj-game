@@ -88,6 +88,7 @@ export class LevelScene extends Phaser.Scene {
 
     if (this.level.flagX != null) {
       this.flag = this.add.rectangle(this.level.flagX * TILE, 96, 4, 112, 0xffffff).setOrigin(0, 0).setDepth(4);
+      this.goalFlag = this.createGoalFlag(this.level.flagX * TILE + 4, 102);
       this.flagZone = this.add.zone(this.level.flagX * TILE, 0, 24, VIEW_H).setOrigin(0, 0);
       this.physics.add.existing(this.flagZone, true);
       this.physics.add.overlap(this.player.sprite, this.flagZone, () => this.levelClear());
@@ -121,6 +122,14 @@ export class LevelScene extends Phaser.Scene {
       this.input.keyboard.once('keydown-SPACE', play);
       this.input.keyboard.once('keydown-UP', play);
     }
+  }
+
+  createGoalFlag(x, y) {
+    const cloth = this.add.rectangle(0, 0, 22, 12, 0x39c754).setOrigin(0, 0);
+    const point = this.add.triangle(22, 0, 0, 0, 0, 12, 10, 6, 0x2fa344).setOrigin(0, 0);
+    const trim = this.add.rectangle(0, 0, 3, 14, 0xffffff).setOrigin(0, 0);
+    const emblem = this.add.star(11, 6, 5, 2, 5, 0xfff2c0, 0.95).setAngle(18);
+    return this.add.container(x, y, [cloth, point, trim, emblem]).setDepth(5);
   }
 
   bgColor() {
@@ -575,8 +584,10 @@ export class LevelScene extends Phaser.Scene {
     this.updateHud();
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     if (timeBonus > 0) this.scorePop(this.player.sprite.x, this.player.sprite.y - 44, `TIME ${timeBonus}`);
+    this.lowerGoalFlag();
+    this.launchGoalFireworks();
     this.showCenterBanner('LEVEL CLEAR!', `TIME BONUS ${timeBonus}`);
-    this.time.delayedCall(900, () => {
+    this.time.delayedCall(1500, () => {
       if (this.demo) {
         this.scene.start('Cast', { attract: true });
         return;
@@ -584,6 +595,29 @@ export class LevelScene extends Phaser.Scene {
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
       else this.scene.start('Level', this.levelState({ levelIndex: next, respawn: null }));
+    });
+  }
+
+  lowerGoalFlag() {
+    if (!this.goalFlag || !this.flag) return;
+    this.tweens.add({
+      targets: this.goalFlag,
+      y: this.flag.y + this.flag.height - 20,
+      duration: 720,
+      ease: 'Sine.easeIn',
+    });
+  }
+
+  launchGoalFireworks() {
+    const startX = this.level.flagX * TILE;
+    const bursts = [
+      [startX - 42, 74, 0xffd34d],
+      [startX + 36, 58, 0x7ad6ff],
+      [startX - 18, 44, 0xff6a8a],
+      [startX + 58, 86, 0xfff2c0],
+    ];
+    bursts.forEach(([x, y, color], index) => {
+      this.time.delayedCall(180 + index * 190, () => this.addFirework(x, y, color));
     });
   }
 
@@ -794,6 +828,34 @@ export class LevelScene extends Phaser.Scene {
         duration: 360,
         ease: 'Quad.easeOut',
         onComplete: () => dot.destroy(),
+      });
+    }
+  }
+
+  addFirework(x, y, color) {
+    const core = this.ignoreUi(this.add.circle(x, y, 3, color, 0.95).setDepth(37));
+    this.tweens.add({
+      targets: core,
+      scale: 0,
+      alpha: 0,
+      duration: 240,
+      ease: 'Quad.easeOut',
+      onComplete: () => core.destroy(),
+    });
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 * i) / 14;
+      const distance = 18 + (i % 3) * 5;
+      const spark = this.ignoreUi(this.add.star(x, y, 4, 1, 4, color, 0.95).setDepth(37));
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        angle: Phaser.Math.RadToDeg(angle) + 180,
+        scale: 0,
+        alpha: 0,
+        duration: 560,
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy(),
       });
     }
   }

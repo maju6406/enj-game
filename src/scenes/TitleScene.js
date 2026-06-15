@@ -29,29 +29,31 @@ function scheduleAttract(scene, nextScene, data = {}) {
 }
 
 function addTitleScenery(scene) {
+  scene.add.circle(322, 68, 22, 0xffd34d, 1)
+    .setDepth(0);
   scene.add.image(58, 48, 'scenery-cloud')
     .setScale(0.72)
-    .setAlpha(0.78)
-    .setDepth(-30);
+    .setAlpha(0.9)
+    .setDepth(1);
   scene.add.image(304, 36, 'scenery-cloud')
     .setScale(0.88)
-    .setAlpha(0.72)
-    .setDepth(-30);
-  scene.add.image(190, VIEW_H - 70, 'scenery-ridge')
+    .setAlpha(0.86)
+    .setDepth(1);
+  scene.add.image(70, VIEW_H - 45, 'scenery-hills')
     .setOrigin(0.5, 1)
-    .setScale(1.55, 1.05)
-    .setAlpha(0.42)
-    .setDepth(-28);
-  scene.add.image(314, VIEW_H - 45, 'scenery-hills')
+    .setScale(0.86)
+    .setAlpha(0.82)
+    .setDepth(3);
+  scene.add.image(306, VIEW_H - 45, 'scenery-hills')
     .setOrigin(0.5, 1)
     .setScale(0.95)
-    .setAlpha(0.55)
-    .setDepth(-26);
+    .setAlpha(0.84)
+    .setDepth(3);
   scene.add.image(198, VIEW_H - 40, 'scenery-castle')
     .setOrigin(0.5, 1)
     .setScale(0.88)
-    .setAlpha(0.78)
-    .setDepth(-12);
+    .setAlpha(0.94)
+    .setDepth(4);
 }
 
 export class TitleScene extends Phaser.Scene {
@@ -59,21 +61,21 @@ export class TitleScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#5c94fc');
     addTitleScenery(this);
-    this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
-    this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
-    const jack = hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);
-    const evee = hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true);
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23).setDepth(6);
+    this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840).setDepth(7);
+    const jack = hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title).setDepth(12);
+    const evee = hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true).setDepth(12);
     loopBob(this, jack, 3, 920);
     loopBob(this, evee, 3, 940, { delay: 180 });
     loopWobble(this, [jack, evee], 1.5, 1180);
     const logo = [
-      text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d'),
-      text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a'),
+      text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d').setDepth(20),
+      text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a').setDepth(20),
     ];
-    text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0');
-    menuPrompt(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13);
-    menuPanel(this, VIEW_W / 2, 200, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 });
-    const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 200, 164, 4, 0xffd34d).setOrigin(0, 0.5);
+    text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0').setDepth(20);
+    menuPrompt(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13).setDepth(20);
+    menuPanel(this, VIEW_W / 2, 200, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 }).setDepth(19);
+    const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 200, 164, 4, 0xffd34d).setOrigin(0, 0.5).setDepth(20);
     this.tweens.add({ targets: logo, y: '+=2', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     let started = false;
     let remaining = 30;

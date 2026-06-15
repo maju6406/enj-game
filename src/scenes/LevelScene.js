@@ -13,6 +13,11 @@ const TILE_KEY = {
   '^': 'tile-spikes', v: 'tile-lava',
 };
 
+const GREY_TILE_KEY = {
+  '#': 'tile-ground-grey', X: 'tile-stone', B: 'tile-brick-grey',
+  D: 'tile-used-grey', '=': 'tile-platform-grey',
+};
+
 function label(scene, txt, x, y, size = 10) {
   return scene.add.text(Math.round(x), Math.round(y), txt, uiTextStyle(size, '#ffffff'))
     .setScrollFactor(0)
@@ -88,6 +93,8 @@ export class LevelScene extends Phaser.Scene {
 
     if (this.level.flagX != null) {
       this.flag = this.add.rectangle(this.level.flagX * TILE, 96, 4, 112, 0xffffff).setOrigin(0, 0).setDepth(4);
+      this.goalFlag = this.createGoalFlag(this.level.flagX * TILE + 4, 102);
+      this.goalCastle = this.add.image(this.level.flagX * TILE + 56, 208, 'scenery-castle').setOrigin(0.5, 1).setDepth(3);
       this.flagZone = this.add.zone(this.level.flagX * TILE, 0, 24, VIEW_H).setOrigin(0, 0);
       this.physics.add.existing(this.flagZone, true);
       this.physics.add.overlap(this.player.sprite, this.flagZone, () => this.levelClear());
@@ -123,6 +130,14 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
+  createGoalFlag(x, y) {
+    const cloth = this.add.rectangle(0, 0, 22, 12, 0x39c754).setOrigin(0, 0);
+    const point = this.add.triangle(22, 0, 0, 0, 0, 12, 10, 6, 0x2fa344).setOrigin(0, 0);
+    const trim = this.add.rectangle(0, 0, 3, 14, 0xffffff).setOrigin(0, 0);
+    const emblem = this.add.star(11, 6, 5, 2, 5, 0xfff2c0, 0.95).setAngle(18);
+    return this.add.container(x, y, [cloth, point, trim, emblem]).setDepth(5);
+  }
+
   bgColor() {
     return this.level.theme === 'underground' ? '#101020' : this.level.theme === 'castle' ? '#181420' : '#5c94fc';
   }
@@ -151,13 +166,6 @@ export class LevelScene extends Phaser.Scene {
         .setScrollFactor(0.35)
         .setDepth(-15)
         .setScale(Phaser.Math.FloatBetween(0.95, 1.35));
-    }
-    for (let x = 80; x < width; x += 210) {
-      this.add.image(x, VIEW_H - 32, 'scenery-bush')
-        .setOrigin(0.5, 1)
-        .setScrollFactor(0.65)
-        .setDepth(-10)
-        .setScale(Phaser.Math.FloatBetween(0.95, 1.2));
     }
   }
 
@@ -192,7 +200,7 @@ export class LevelScene extends Phaser.Scene {
             ease: 'Sine.easeInOut',
           });
         } else if (SOLID.has(ch)) {
-          const key = ch === '#' && this.tileAt(x, y - 1) === '#' ? 'tile-ground-fill' : TILE_KEY[ch] || 'tile-block';
+          const key = this.tileTextureKey(ch, x, y);
           const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, key));
           s.setData('tile', { x, y, ch });
           this.blockSprites.set(`${x},${y}`, s);
@@ -203,6 +211,19 @@ export class LevelScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  usesGreyBlocks() {
+    return this.level.theme === 'underground' || this.level.theme === 'castle';
+  }
+
+  tileTextureKey(ch, x, y) {
+    if (ch === '#') {
+      if (!this.usesGreyBlocks()) return this.tileAt(x, y - 1) === '#' ? 'tile-ground-fill' : 'tile-ground';
+      return this.tileAt(x, y - 1) === '#' ? 'tile-ground-grey-fill' : 'tile-ground-grey';
+    }
+    if (this.usesGreyBlocks() && GREY_TILE_KEY[ch]) return GREY_TILE_KEY[ch];
+    return TILE_KEY[ch] || 'tile-block';
   }
 
   animateBlockAmbient(block, ch, x, y) {
@@ -270,7 +291,7 @@ export class LevelScene extends Phaser.Scene {
       ease: 'Quad.easeOut',
     });
     this.addDust(block.x, block.y + 4);
-    block.setTexture('tile-used');
+    block.setTexture(this.usesGreyBlocks() ? 'tile-used-grey' : 'tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
     flashTint(this, block, 0xfff2c0, 80);
     this.tweens.add({
@@ -371,8 +392,11 @@ export class LevelScene extends Phaser.Scene {
     if (!enemy.active || enemy.dead) return;
     const falling = this.player.sprite.body.velocity.y > 20;
     const enemyTop = enemy.body?.top ?? enemy.y - enemy.displayHeight;
-    const stompGrace = enemy.kind === 'boss' ? 18 : 10;
-    const above = this.player.sprite.body.bottom <= enemyTop + stompGrace;
+    const stompGrace = enemy.kind === 'boss' ? 30 : 10;
+    const horizontalGrace = enemy.kind === 'boss' ? 12 : 2;
+    const overlapsHead = this.player.sprite.body.right >= enemy.body.left - horizontalGrace
+      && this.player.sprite.body.left <= enemy.body.right + horizontalGrace;
+    const above = overlapsHead && this.player.sprite.body.bottom <= enemyTop + stompGrace;
     if (falling && above && enemy.kind === 'boss' && this.time.now < (enemy.invulnUntil || 0)) {
       this.player.bounce(false);
       this.addSparkle(enemy.x, enemyTop + 8, 0xffffff);
@@ -575,8 +599,11 @@ export class LevelScene extends Phaser.Scene {
     this.updateHud();
     this.addBurst(this.player.sprite.x, this.player.sprite.y - 24, 0xffd34d);
     if (timeBonus > 0) this.scorePop(this.player.sprite.x, this.player.sprite.y - 44, `TIME ${timeBonus}`);
+    this.lowerGoalFlag();
+    this.walkHeroIntoCastle();
+    this.launchGoalFireworks();
     this.showCenterBanner('LEVEL CLEAR!', `TIME BONUS ${timeBonus}`);
-    this.time.delayedCall(900, () => {
+    this.time.delayedCall(5200, () => {
       if (this.demo) {
         this.scene.start('Cast', { attract: true });
         return;
@@ -584,6 +611,59 @@ export class LevelScene extends Phaser.Scene {
       const next = this.levelIndex + 1;
       if (next >= LEVELS.length) this.scene.start('Win', { who: this.who, score: this.score });
       else this.scene.start('Level', this.levelState({ levelIndex: next, respawn: null }));
+    });
+  }
+
+  lowerGoalFlag() {
+    if (!this.goalFlag || !this.flag) return;
+    this.tweens.add({
+      targets: this.goalFlag,
+      y: this.flag.y + this.flag.height - 20,
+      duration: 720,
+      ease: 'Sine.easeIn',
+    });
+  }
+
+  launchGoalFireworks() {
+    const centerX = this.goalCastle?.x || this.player.sprite.x;
+    const minX = centerX - 50;
+    const maxX = centerX + 50;
+    const castleTop = (this.goalCastle?.y || 208) - (this.goalCastle?.displayHeight || 58);
+    const bursts = [
+      [Phaser.Math.Linear(minX, maxX, 0.25), castleTop - 12, 0xffd34d],
+      [Phaser.Math.Linear(minX, maxX, 0.72), castleTop - 30, 0x7ad6ff],
+      [Phaser.Math.Linear(minX, maxX, 0.48), castleTop + 8, 0xff6a8a],
+      [Phaser.Math.Linear(minX, maxX, 0.88), castleTop - 4, 0xfff2c0],
+      [Phaser.Math.Linear(minX, maxX, 0.14), castleTop - 24, 0x9adf4a],
+      [Phaser.Math.Linear(minX, maxX, 0.62), castleTop - 40, 0xb06ad8],
+      [Phaser.Math.Linear(minX, maxX, 0.35), castleTop - 20, 0xffffff],
+    ];
+    bursts.forEach(([x, y, color], index) => {
+      this.time.delayedCall(1300 + index * 360, () => this.addFirework(x, y, color));
+    });
+  }
+
+  walkHeroIntoCastle() {
+    if (!this.goalCastle || !this.player?.sprite) return;
+    const hero = this.player.sprite;
+    hero.body.enable = false;
+    hero.setVelocity(0, 0);
+    hero.setAcceleration(0, 0);
+    hero.setFlipX(false);
+    hero.setDepth(6);
+    this.tweens.add({
+      targets: hero,
+      x: this.goalCastle.x,
+      duration: 1050,
+      ease: 'Sine.easeInOut',
+      onComplete: () => {
+        this.tweens.add({
+          targets: hero,
+          alpha: 0,
+          duration: 260,
+          ease: 'Quad.easeIn',
+        });
+      },
     });
   }
 
@@ -609,7 +689,24 @@ export class LevelScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) {
       this.bossHudHearts.push(this.add.image(VIEW_W / 2 + 21 + i * 12, 57, 'heart').setScrollFactor(0).setDepth(59).setTint(0xff6a6a));
     }
-    this.cameras.main.ignore([...this.bossHud, ...this.bossHudHearts]);
+    const entries = [...this.bossHud, ...this.bossHudHearts];
+    entries.forEach((entry) => entry.setVisible(false));
+    this.cameras.main.ignore(entries);
+  }
+
+  updateBossHudVisibility() {
+    if (!this.boss || !this.bossHud || this.bossHudVisible) return;
+    const view = this.cameras.main.worldView;
+    if (this.boss.x > view.right + 24 || this.boss.x < view.x - 24) return;
+    this.bossHudVisible = true;
+    const entries = [...this.bossHud, ...this.bossHudHearts];
+    entries.forEach((entry) => entry.setVisible(true).setAlpha(0));
+    this.tweens.add({
+      targets: entries,
+      alpha: 1,
+      duration: 240,
+      ease: 'Quad.easeOut',
+    });
   }
 
   onBossDamaged(boss) {
@@ -798,6 +895,34 @@ export class LevelScene extends Phaser.Scene {
     }
   }
 
+  addFirework(x, y, color) {
+    const core = this.ignoreUi(this.add.circle(x, y, 5, color, 0.95).setDepth(72));
+    this.tweens.add({
+      targets: core,
+      scale: 0,
+      alpha: 0,
+      duration: 240,
+      ease: 'Quad.easeOut',
+      onComplete: () => core.destroy(),
+    });
+    for (let i = 0; i < 20; i++) {
+      const angle = (Math.PI * 2 * i) / 20;
+      const distance = 26 + (i % 4) * 5;
+      const spark = this.ignoreUi(this.add.star(x, y, 5, 1, 5, color, 0.95).setDepth(72));
+      this.tweens.add({
+        targets: spark,
+        x: x + Math.cos(angle) * distance,
+        y: y + Math.sin(angle) * distance,
+        angle: Phaser.Math.RadToDeg(angle) + 180,
+        scale: 0,
+        alpha: 0,
+        duration: 720,
+        ease: 'Quad.easeOut',
+        onComplete: () => spark.destroy(),
+      });
+    }
+  }
+
   addSparkle(x, y, color) {
     for (let i = 0; i < 5; i++) {
       const star = this.ignoreUi(this.add.star(x, y, 4, 1, 4, color, 0.9).setDepth(36));
@@ -925,6 +1050,10 @@ export class LevelScene extends Phaser.Scene {
     }
     const touch = this.demo ? this.demoInput(time) : this.touch;
     this.player.update(this.cursors, this.keys, touch);
+    if (this.level.flagX != null && this.player.sprite.body.right >= this.level.flagX * TILE + 8) {
+      this.levelClear();
+      return;
+    }
     this.updatePowerUps();
     this.enemies.children.each((e) => {
       if (e.y > VIEW_H + 96) {
@@ -933,6 +1062,7 @@ export class LevelScene extends Phaser.Scene {
       }
       updateEnemy(this, e, time);
     });
+    this.updateBossHudVisibility();
     this.updateHud();
   }
 

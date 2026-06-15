@@ -56,6 +56,10 @@ export function updateEnemy(scene, e, time) {
   } else {
     if (e.body.blocked.left) e.patrolDir = 1;
     if (e.body.blocked.right) e.patrolDir = -1;
+    if (e.kind === 'boss') {
+      if (e.x < e.baseX - 48) e.patrolDir = 1;
+      if (e.x > e.baseX + 48) e.patrolDir = -1;
+    }
     if (e.kind === 'chupacabra' && e.shell) {
       if (Math.abs(e.body.velocity.x) >= 5) e.patrolDir = Math.sign(e.body.velocity.x) || e.patrolDir;
       animateShell(e, time);

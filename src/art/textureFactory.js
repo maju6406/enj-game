@@ -63,6 +63,34 @@ function groundTile(scene) {
   rect(ctx, 3, 0, 2, 12, '#4f3218');
   rect(ctx, 5, 8, 6, 1, '#4f3218');
   add(scene, 'tile-ground-fill', c);
+
+  [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, 4, '#9ca0b8');
+  rect(ctx, 0, 4, TILE, 3, '#6f7288');
+  rect(ctx, 0, 7, TILE, 9, '#56586b');
+  rect(ctx, 0, 7, TILE, 2, '#c7cbe2');
+  rect(ctx, 0, 14, TILE, 2, '#202231');
+  rect(ctx, 2, 1, 4, 2, '#d9dcef');
+  rect(ctx, 9, 2, 5, 2, '#bbbfd6');
+  rect(ctx, 1, 9, 3, 3, '#70758d');
+  rect(ctx, 10, 11, 3, 2, '#3d4054');
+  rect(ctx, 5, 13, 4, 2, '#8d91aa');
+  rect(ctx, 12, 12, 2, 4, '#2b2d3f');
+  rect(ctx, 3, 7, 2, 7, '#35384a');
+  rect(ctx, 5, 12, 6, 1, '#35384a');
+  add(scene, 'tile-ground-grey', c);
+
+  [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, TILE, '#56586b');
+  rect(ctx, 0, 0, TILE, 2, '#c7cbe2');
+  rect(ctx, 0, 14, TILE, 2, '#202231');
+  rect(ctx, 1, 2, 3, 3, '#70758d');
+  rect(ctx, 10, 5, 3, 2, '#3d4054');
+  rect(ctx, 5, 10, 4, 3, '#8d91aa');
+  rect(ctx, 12, 9, 2, 5, '#2b2d3f');
+  rect(ctx, 3, 0, 2, 12, '#35384a');
+  rect(ctx, 5, 8, 6, 1, '#35384a');
+  add(scene, 'tile-ground-grey-fill', c);
 }
 
 function hazard(scene, key, color) {
@@ -94,6 +122,7 @@ function questionTile(scene) {
   rect(ctx, 6, 4, 1, 1, '#b86e00');
   rect(ctx, 11, 8, 1, 1, '#7a3c08');
   add(scene, 'tile-question', c);
+
 }
 
 function coin(scene) {
@@ -297,6 +326,30 @@ function scenery(scene) {
   rect(ctx, 13, 7, 5, 2, '#73e071');
   rect(ctx, 30, 6, 6, 2, '#73e071');
   add(scene, 'scenery-bush', c);
+
+  [c, ctx] = canvas(66, 58);
+  rect(ctx, 6, 20, 54, 36, '#5b5d72');
+  rect(ctx, 9, 23, 48, 31, '#8d91aa');
+  rect(ctx, 6, 18, 54, 5, '#c7cbe2');
+  rect(ctx, 5, 14, 9, 8, '#5b5d72');
+  rect(ctx, 21, 12, 9, 10, '#5b5d72');
+  rect(ctx, 36, 12, 9, 10, '#5b5d72');
+  rect(ctx, 52, 14, 9, 8, '#5b5d72');
+  rect(ctx, 5, 12, 9, 3, '#c7cbe2');
+  rect(ctx, 21, 10, 9, 3, '#c7cbe2');
+  rect(ctx, 36, 10, 9, 3, '#c7cbe2');
+  rect(ctx, 52, 12, 9, 3, '#c7cbe2');
+  rect(ctx, 16, 30, 8, 8, '#27283a');
+  rect(ctx, 42, 30, 8, 8, '#27283a');
+  rect(ctx, 29, 39, 12, 17, '#27283a');
+  rect(ctx, 31, 41, 8, 15, '#171827');
+  rect(ctx, 10, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 27, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 44, 25, 5, 2, '#d9f3ff');
+  rect(ctx, 10, 45, 7, 2, '#70758d');
+  rect(ctx, 48, 45, 7, 2, '#70758d');
+  rect(ctx, 6, 54, 54, 4, '#3d4054');
+  add(scene, 'scenery-castle', c);
 }
 
 export function fallbackHeroTextures(scene) {
@@ -319,9 +372,12 @@ export function generateTextures(scene) {
   groundTile(scene);
   tile(scene, 'tile-block', '#8b5a2b', '#d69249', '#43230d');
   tile(scene, 'tile-brick', '#a04d22', '#e29b58', '#4a1f0c');
+  tile(scene, 'tile-brick-grey', '#56586b', '#9ca0b8', '#202231', '#70758d');
   questionTile(scene);
   tile(scene, 'tile-used', '#796552', '#a89986', '#33291f');
+  tile(scene, 'tile-used-grey', '#4f5264', '#8d91aa', '#202231');
   tile(scene, 'tile-platform', '#91693a', '#d3a05a', '#3d2810');
+  tile(scene, 'tile-platform-grey', '#56586b', '#9ca0b8', '#202231');
   tile(scene, 'tile-pipe', '#237a34', '#62d66b', '#0d3518');
   tile(scene, 'tile-stone', '#56586b', '#9ca0b8', '#202231');
   hazard(scene, 'tile-spikes', '#e5e8ef');

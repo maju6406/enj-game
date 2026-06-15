@@ -381,8 +381,11 @@ export class LevelScene extends Phaser.Scene {
     if (!enemy.active || enemy.dead) return;
     const falling = this.player.sprite.body.velocity.y > 20;
     const enemyTop = enemy.body?.top ?? enemy.y - enemy.displayHeight;
-    const stompGrace = enemy.kind === 'boss' ? 18 : 10;
-    const above = this.player.sprite.body.bottom <= enemyTop + stompGrace;
+    const stompGrace = enemy.kind === 'boss' ? 30 : 10;
+    const horizontalGrace = enemy.kind === 'boss' ? 12 : 2;
+    const overlapsHead = this.player.sprite.body.right >= enemy.body.left - horizontalGrace
+      && this.player.sprite.body.left <= enemy.body.right + horizontalGrace;
+    const above = overlapsHead && this.player.sprite.body.bottom <= enemyTop + stompGrace;
     if (falling && above && enemy.kind === 'boss' && this.time.now < (enemy.invulnUntil || 0)) {
       this.player.bounce(false);
       this.addSparkle(enemy.x, enemyTop + 8, 0xffffff);
@@ -675,7 +678,24 @@ export class LevelScene extends Phaser.Scene {
     for (let i = 0; i < 3; i++) {
       this.bossHudHearts.push(this.add.image(VIEW_W / 2 + 21 + i * 12, 57, 'heart').setScrollFactor(0).setDepth(59).setTint(0xff6a6a));
     }
-    this.cameras.main.ignore([...this.bossHud, ...this.bossHudHearts]);
+    const entries = [...this.bossHud, ...this.bossHudHearts];
+    entries.forEach((entry) => entry.setVisible(false));
+    this.cameras.main.ignore(entries);
+  }
+
+  updateBossHudVisibility() {
+    if (!this.boss || !this.bossHud || this.bossHudVisible) return;
+    const view = this.cameras.main.worldView;
+    if (this.boss.x > view.right + 24 || this.boss.x < view.x - 24) return;
+    this.bossHudVisible = true;
+    const entries = [...this.bossHud, ...this.bossHudHearts];
+    entries.forEach((entry) => entry.setVisible(true).setAlpha(0));
+    this.tweens.add({
+      targets: entries,
+      alpha: 1,
+      duration: 240,
+      ease: 'Quad.easeOut',
+    });
   }
 
   onBossDamaged(boss) {
@@ -1031,6 +1051,7 @@ export class LevelScene extends Phaser.Scene {
       }
       updateEnemy(this, e, time);
     });
+    this.updateBossHudVisibility();
     this.updateHud();
   }
 

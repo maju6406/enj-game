@@ -37,4 +37,4 @@ Then open the local Vite URL shown in the terminal.
 npm run build
 ```
 
-## Thanks for coming!
+## Thanks for coming! Fixed on iphone

@@ -28,6 +28,10 @@ function scheduleAttract(scene, nextScene, data = {}) {
   });
 }
 
+function isTouchDevice() {
+  return window.matchMedia?.('(pointer: coarse)').matches;
+}
+
 function addTitleScenery(scene) {
   scene.add.circle(322, 68, 22, 0xffd34d, 1)
     .setDepth(0);
@@ -73,7 +77,10 @@ export class TitleScene extends Phaser.Scene {
       text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a').setDepth(20),
     ];
     text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0').setDepth(20);
-    menuPrompt(this, 'PRESS ENTER / TAP', VIEW_W / 2, 172, 13).setDepth(20);
+    if (isTouchDevice()) {
+      text(this, 'USE LEFT / RIGHT / JUMP BUTTONS', VIEW_W / 2, 158, 6, '#fff2c0').setDepth(20);
+    }
+    menuPrompt(this, isTouchDevice() ? 'TAP TO START' : 'PRESS ENTER / TAP', VIEW_W / 2, 176, 13).setDepth(20);
     menuPanel(this, VIEW_W / 2, 200, 168, 8, { fill: 0x101020, alpha: 0.55, stroke: 0xffffff, strokeWidth: 1 }).setDepth(19);
     const countdownFill = this.add.rectangle(VIEW_W / 2 - 82, 200, 164, 4, 0xffd34d).setOrigin(0, 0.5).setDepth(20);
     this.tweens.add({ targets: logo, y: '+=2', duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -131,7 +138,10 @@ export class CastScene extends Phaser.Scene {
     loopWobble(this, jack, 1.2, 920);
     loopWobble(this, evee, -1.2, 880);
 
-    menuPrompt(this, this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE', VIEW_W / 2, 225, 8);
+    const castPrompt = isTouchDevice()
+      ? (this.isAttract ? 'TAP TO PLAY' : 'TAP TO CHOOSE')
+      : (this.isAttract ? 'PRESS ENTER / TAP TO PLAY' : 'PRESS ENTER / TAP TO CHOOSE');
+    menuPrompt(this, castPrompt, VIEW_W / 2, 225, 8);
 
     let advanced = false;
     const next = () => {
@@ -177,7 +187,7 @@ export class CryptidsScene extends Phaser.Scene {
       if (key === 'enemy-mothman') loopPulse(this, img, 1.04, 320);
     }
 
-    menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
+    menuPrompt(this, isTouchDevice() ? 'TAP TO PLAY' : 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
 
     let advanced = false;
     const play = () => {
@@ -224,7 +234,7 @@ export class PowerupsScene extends Phaser.Scene {
       if (key === 'relic' || key === 'journal') loopWobble(this, img, 5, key === 'relic' ? 460 : 620);
     }
 
-    menuPrompt(this, 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
+    menuPrompt(this, isTouchDevice() ? 'TAP TO PLAY' : 'PRESS ENTER / TAP TO PLAY', VIEW_W / 2, 230, 8);
 
     let advanced = false;
     const play = () => {
@@ -267,7 +277,7 @@ export class SelectScene extends Phaser.Scene {
     text(this, 'EVEE', 272, 171, 13, '#ffffff');
     text(this, 'BRAVE EXPLORER', 112, 190, 6, '#fff2c0');
     text(this, 'CRYPTID SLEUTH', 272, 190, 6, '#fff2c0');
-    menuPrompt(this, 'TAP HERO OR ENTER', VIEW_W / 2, 216, 9);
+    menuPrompt(this, isTouchDevice() ? 'TAP A HERO' : 'TAP HERO OR ENTER', VIEW_W / 2, 216, 9);
     this.input.keyboard.on('keydown-LEFT', () => this.setPick(0));
     this.input.keyboard.on('keydown-RIGHT', () => this.setPick(1));
     this.input.keyboard.on('keydown-ENTER', () => this.start());
@@ -310,11 +320,12 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#0b0b16');
     text(this, 'GAME OVER', VIEW_W / 2, 92, 28, '#ff6a6a');
     text(this, `SCORE ${data.score || 0}`, VIEW_W / 2, 128, 12, '#ffffff');
-    text(this, 'PRESS ENTER / SPACE', VIEW_W / 2, 170, 14, '#ffe060');
+    text(this, isTouchDevice() ? 'TAP TO TRY AGAIN' : 'PRESS ENTER / SPACE', VIEW_W / 2, 170, 14, '#ffe060');
     const restart = () => { sfx('select'); this.scene.start('Title'); };
     this.input.keyboard.once('keydown-ENTER', restart);
     this.input.keyboard.once('keydown-SPACE', restart);
     this.input.keyboard.once('keydown-UP', restart);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, restart);
   }
 }
 
@@ -330,8 +341,11 @@ export class WinScene extends Phaser.Scene {
     loopWobble(this, [winner, pal], 2, 700);
     text(this, 'CRYPTIDS CATALOGED!', VIEW_W / 2, 54, 18, '#ffe060');
     text(this, `FINAL SCORE ${data.score || 0}`, VIEW_W / 2, 96, 12, '#ffffff');
-    text(this, 'PRESS ENTER', VIEW_W / 2, 168, 14, '#ffffff');
+    text(this, isTouchDevice() ? 'TAP TO TITLE' : 'PRESS ENTER', VIEW_W / 2, 168, 14, '#ffffff');
     sfx('win');
-    this.input.keyboard.once('keydown-ENTER', () => { sfx('select'); this.scene.start('Title'); });
+    const restart = () => { sfx('select'); this.scene.start('Title'); };
+    this.input.keyboard.once('keydown-ENTER', restart);
+    this.input.keyboard.once('keydown-SPACE', restart);
+    tapZone(this, VIEW_W / 2, VIEW_H / 2, VIEW_W, VIEW_H, restart);
   }
 }

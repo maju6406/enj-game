@@ -797,7 +797,7 @@ export class LevelScene extends Phaser.Scene {
   }
 
   createTouchControls() {
-    if (!window.matchMedia?.('(pointer: coarse)').matches) return;
+    if (!this.isTouchLayout()) return;
     const makeButton = (x, y, text, fill, onDown, onUp, width = 42) => {
       const button = this.add.rectangle(x, y, width, 36, fill, 0.28)
         .setScrollFactor(0)
@@ -814,7 +814,7 @@ export class LevelScene extends Phaser.Scene {
     makeButton(37, VIEW_H - 28, 'LEFT', 0xffffff, () => { this.touch.left = true; }, () => { this.touch.left = false; }, 56);
     makeButton(100, VIEW_H - 28, 'RIGHT', 0xffffff, () => { this.touch.right = true; }, () => { this.touch.right = false; }, 58);
     makeButton(VIEW_W - 47, VIEW_H - 28, 'JUMP', 0xffd34d, () => { this.touch.jump = true; }, () => { this.touch.jump = false; }, 64);
-    const hint = label(this, 'TAP BUTTONS TO MOVE', VIEW_W / 2 - 70, VIEW_H - 49, 6).setDepth(91);
+    const hint = label(this, 'LEFT/RIGHT MOVE - JUMP HOPS', VIEW_W / 2 - 92, VIEW_H - 49, 6).setDepth(91);
     this.cameras.main.ignore(hint);
     this.tweens.add({ targets: hint, alpha: 0, delay: 2600, duration: 600, onComplete: () => hint.destroy() });
   }
@@ -822,7 +822,7 @@ export class LevelScene extends Phaser.Scene {
   createPauseControls() {
     this.input.keyboard.on('keydown-P', () => this.togglePauseOverlay());
     this.input.keyboard.on('keydown-ESC', () => this.togglePauseOverlay());
-    if (!window.matchMedia?.('(pointer: coarse)').matches) return;
+    if (!this.isTouchLayout()) return;
     const button = this.add.rectangle(VIEW_W - 32, 56, 54, 22, 0x101020, 0.62)
       .setScrollFactor(0)
       .setDepth(92)
@@ -836,6 +836,10 @@ export class LevelScene extends Phaser.Scene {
   ignoreUi(target) {
     this.uiCamera?.ignore(target);
     return target;
+  }
+
+  isTouchLayout() {
+    return window.matchMedia?.('(pointer: coarse)').matches;
   }
 
   updateHud() {
@@ -1011,11 +1015,13 @@ export class LevelScene extends Phaser.Scene {
     }
     this.pausedByOverlay = true;
     this.physics.world.pause();
+    const moveText = this.isTouchLayout() ? 'LEFT / RIGHT BUTTONS MOVE' : 'ARROWS / BUTTONS MOVE';
+    const jumpText = this.isTouchLayout() ? 'JUMP BUTTON HOPS' : 'UP / SPACE / JUMP HOPS';
     const overlay = [
       this.add.rectangle(VIEW_W / 2, VIEW_H / 2, 250, 142, 0x101020, 0.88).setScrollFactor(0).setDepth(120).setStrokeStyle(2, 0xffd34d),
       label(this, 'PAUSED', VIEW_W / 2 - 38, 62, 16).setDepth(121),
-      label(this, 'ARROWS / BUTTONS MOVE', VIEW_W / 2 - 78, 91, 7).setDepth(121),
-      label(this, 'UP / SPACE / JUMP HOPS', VIEW_W / 2 - 86, 106, 7).setDepth(121),
+      label(this, moveText, VIEW_W / 2 - 86, 91, 7).setDepth(121),
+      label(this, jumpText, VIEW_W / 2 - 74, 106, 7).setDepth(121),
     ];
     const resume = this.pauseButton('RESUME', VIEW_W / 2 - 62, 136, () => this.closePauseOverlay());
     const restart = this.pauseButton('RESTART', VIEW_W / 2, 166, () => this.scene.start('Level', this.levelState({ respawn: null })));

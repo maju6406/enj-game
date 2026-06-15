@@ -63,6 +63,34 @@ function groundTile(scene) {
   rect(ctx, 3, 0, 2, 12, '#4f3218');
   rect(ctx, 5, 8, 6, 1, '#4f3218');
   add(scene, 'tile-ground-fill', c);
+
+  [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, 4, '#9ca0b8');
+  rect(ctx, 0, 4, TILE, 3, '#6f7288');
+  rect(ctx, 0, 7, TILE, 9, '#56586b');
+  rect(ctx, 0, 7, TILE, 2, '#c7cbe2');
+  rect(ctx, 0, 14, TILE, 2, '#202231');
+  rect(ctx, 2, 1, 4, 2, '#d9dcef');
+  rect(ctx, 9, 2, 5, 2, '#bbbfd6');
+  rect(ctx, 1, 9, 3, 3, '#70758d');
+  rect(ctx, 10, 11, 3, 2, '#3d4054');
+  rect(ctx, 5, 13, 4, 2, '#8d91aa');
+  rect(ctx, 12, 12, 2, 4, '#2b2d3f');
+  rect(ctx, 3, 7, 2, 7, '#35384a');
+  rect(ctx, 5, 12, 6, 1, '#35384a');
+  add(scene, 'tile-ground-grey', c);
+
+  [c, ctx] = canvas(TILE, TILE);
+  rect(ctx, 0, 0, TILE, TILE, '#56586b');
+  rect(ctx, 0, 0, TILE, 2, '#c7cbe2');
+  rect(ctx, 0, 14, TILE, 2, '#202231');
+  rect(ctx, 1, 2, 3, 3, '#70758d');
+  rect(ctx, 10, 5, 3, 2, '#3d4054');
+  rect(ctx, 5, 10, 4, 3, '#8d91aa');
+  rect(ctx, 12, 9, 2, 5, '#2b2d3f');
+  rect(ctx, 3, 0, 2, 12, '#35384a');
+  rect(ctx, 5, 8, 6, 1, '#35384a');
+  add(scene, 'tile-ground-grey-fill', c);
 }
 
 function hazard(scene, key, color) {
@@ -94,6 +122,7 @@ function questionTile(scene) {
   rect(ctx, 6, 4, 1, 1, '#b86e00');
   rect(ctx, 11, 8, 1, 1, '#7a3c08');
   add(scene, 'tile-question', c);
+
 }
 
 function coin(scene) {
@@ -343,9 +372,12 @@ export function generateTextures(scene) {
   groundTile(scene);
   tile(scene, 'tile-block', '#8b5a2b', '#d69249', '#43230d');
   tile(scene, 'tile-brick', '#a04d22', '#e29b58', '#4a1f0c');
+  tile(scene, 'tile-brick-grey', '#56586b', '#9ca0b8', '#202231', '#70758d');
   questionTile(scene);
   tile(scene, 'tile-used', '#796552', '#a89986', '#33291f');
+  tile(scene, 'tile-used-grey', '#4f5264', '#8d91aa', '#202231');
   tile(scene, 'tile-platform', '#91693a', '#d3a05a', '#3d2810');
+  tile(scene, 'tile-platform-grey', '#56586b', '#9ca0b8', '#202231');
   tile(scene, 'tile-pipe', '#237a34', '#62d66b', '#0d3518');
   tile(scene, 'tile-stone', '#56586b', '#9ca0b8', '#202231');
   hazard(scene, 'tile-spikes', '#e5e8ef');

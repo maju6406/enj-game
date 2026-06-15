@@ -13,6 +13,11 @@ const TILE_KEY = {
   '^': 'tile-spikes', v: 'tile-lava',
 };
 
+const GREY_TILE_KEY = {
+  '#': 'tile-ground-grey', X: 'tile-stone', B: 'tile-brick-grey',
+  D: 'tile-used-grey', '=': 'tile-platform-grey',
+};
+
 function label(scene, txt, x, y, size = 10) {
   return scene.add.text(Math.round(x), Math.round(y), txt, uiTextStyle(size, '#ffffff'))
     .setScrollFactor(0)
@@ -162,13 +167,6 @@ export class LevelScene extends Phaser.Scene {
         .setDepth(-15)
         .setScale(Phaser.Math.FloatBetween(0.95, 1.35));
     }
-    for (let x = 80; x < width; x += 210) {
-      this.add.image(x, VIEW_H - 32, 'scenery-bush')
-        .setOrigin(0.5, 1)
-        .setScrollFactor(0.65)
-        .setDepth(-10)
-        .setScale(Phaser.Math.FloatBetween(0.95, 1.2));
-    }
   }
 
   buildWorld() {
@@ -202,7 +200,7 @@ export class LevelScene extends Phaser.Scene {
             ease: 'Sine.easeInOut',
           });
         } else if (SOLID.has(ch)) {
-          const key = ch === '#' && this.tileAt(x, y - 1) === '#' ? 'tile-ground-fill' : TILE_KEY[ch] || 'tile-block';
+          const key = this.tileTextureKey(ch, x, y);
           const s = this.ignoreUi(this.solids.create(x * TILE + 8, y * TILE + 8, key));
           s.setData('tile', { x, y, ch });
           this.blockSprites.set(`${x},${y}`, s);
@@ -213,6 +211,19 @@ export class LevelScene extends Phaser.Scene {
         }
       }
     }
+  }
+
+  usesGreyBlocks() {
+    return this.level.theme === 'underground' || this.level.theme === 'castle';
+  }
+
+  tileTextureKey(ch, x, y) {
+    if (ch === '#') {
+      if (!this.usesGreyBlocks()) return this.tileAt(x, y - 1) === '#' ? 'tile-ground-fill' : 'tile-ground';
+      return this.tileAt(x, y - 1) === '#' ? 'tile-ground-grey-fill' : 'tile-ground-grey';
+    }
+    if (this.usesGreyBlocks() && GREY_TILE_KEY[ch]) return GREY_TILE_KEY[ch];
+    return TILE_KEY[ch] || 'tile-block';
   }
 
   animateBlockAmbient(block, ch, x, y) {
@@ -280,7 +291,7 @@ export class LevelScene extends Phaser.Scene {
       ease: 'Quad.easeOut',
     });
     this.addDust(block.x, block.y + 4);
-    block.setTexture('tile-used');
+    block.setTexture(this.usesGreyBlocks() ? 'tile-used-grey' : 'tile-used');
     block.setData('tile', { x: tile.x, y: tile.y, ch: 'D' });
     flashTint(this, block, 0xfff2c0, 80);
     this.tweens.add({

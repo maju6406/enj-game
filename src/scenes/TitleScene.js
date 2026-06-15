@@ -28,10 +28,37 @@ function scheduleAttract(scene, nextScene, data = {}) {
   });
 }
 
+function addTitleScenery(scene) {
+  scene.add.image(58, 48, 'scenery-cloud')
+    .setScale(0.72)
+    .setAlpha(0.78)
+    .setDepth(-30);
+  scene.add.image(304, 36, 'scenery-cloud')
+    .setScale(0.88)
+    .setAlpha(0.72)
+    .setDepth(-30);
+  scene.add.image(190, VIEW_H - 70, 'scenery-ridge')
+    .setOrigin(0.5, 1)
+    .setScale(1.55, 1.05)
+    .setAlpha(0.42)
+    .setDepth(-28);
+  scene.add.image(314, VIEW_H - 45, 'scenery-hills')
+    .setOrigin(0.5, 1)
+    .setScale(0.95)
+    .setAlpha(0.55)
+    .setDepth(-26);
+  scene.add.image(198, VIEW_H - 40, 'scenery-castle')
+    .setOrigin(0.5, 1)
+    .setScale(0.88)
+    .setAlpha(0.78)
+    .setDepth(-12);
+}
+
 export class TitleScene extends Phaser.Scene {
   constructor() { super('Title'); }
   create() {
     this.cameras.main.setBackgroundColor('#5c94fc');
+    addTitleScenery(this);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
     const jack = hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title);

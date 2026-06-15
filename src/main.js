@@ -1,4 +1,5 @@
 import * as Phaser from 'phaser';
+import { inject } from '@vercel/analytics';
 import { VIEW_H, VIEW_W } from './data/constants.js';
 import { BootScene } from './scenes/BootScene.js';
 import { CastScene, CryptidsScene, GameOverScene, PowerupsScene, SelectScene, TitleScene, WinScene } from './scenes/TitleScene.js';
@@ -9,6 +10,8 @@ if (document.fonts?.load) {
   await document.fonts.load(`16px ${UI_FONT_FAMILY}`);
   await document.fonts.ready;
 }
+
+inject();
 
 const config = {
   type: Phaser.CANVAS,

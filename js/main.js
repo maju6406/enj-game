@@ -4,6 +4,12 @@
   const canvas = document.getElementById('game');
   const ctx = canvas.getContext('2d');
   ctx.imageSmoothingEnabled = false;
+  const HEROES = [
+    { who: 'jack', name: 'JACK' },
+    { who: 'evee', name: 'EVEE' },
+    { who: 'curtis', name: 'CURTIS' },
+    { who: 'toby', name: 'TOBY' },
+  ];
 
   const Game = {
     state: 'title',
@@ -145,10 +151,10 @@
 
       // Sprite assets extracted from the reference image.
       check('heroes extracted', () => {
-        if (!Sprites.heroes || !Sprites.heroes.jack || !Sprites.heroes.evee)
-          throw new Error('missing hero sprites');
-        if (!(Sprites.heroes.jack.width > 4) || !(Sprites.heroes.evee.width > 4))
-          throw new Error('hero canvas empty');
+        HEROES.forEach((hero) => {
+          if (!Sprites.heroes || !Sprites.heroes[hero.who]) throw new Error(`missing ${hero.who} sprite`);
+          if (!(Sprites.heroes[hero.who].width > 4)) throw new Error(`${hero.who} canvas empty`);
+        });
       });
 
       // Drive each level for a while: hold right, tap jump, no exceptions, time advances.
@@ -230,8 +236,8 @@
 
       check('all screens render', () => {
         this.state = 'title'; this.drawTitle();
-        this.state = 'select'; this.selectIndex = 0; this.drawSelect();
-        this.selectIndex = 1; this.drawSelect();
+        this.state = 'select';
+        HEROES.forEach((_, i) => { this.selectIndex = i; this.drawSelect(); });
         this.who = 'jack'; this.loadLevel(0); this.drawWorld(); HUD.draw(ctx, this);
         this.state = 'win'; this.drawWin();
       });
@@ -279,10 +285,16 @@
     },
     updateSelect() {
       if (this.inputLock > 0) return;
-      if (Input.pressed('left') && this.selectIndex !== 0) { this.selectIndex = 0; Audio2.select(); }
-      if (Input.pressed('right') && this.selectIndex !== 1) { this.selectIndex = 1; Audio2.select(); }
+      if (Input.pressed('left')) {
+        this.selectIndex = (this.selectIndex - 1 + HEROES.length) % HEROES.length;
+        Audio2.select();
+      }
+      if (Input.pressed('right')) {
+        this.selectIndex = (this.selectIndex + 1) % HEROES.length;
+        Audio2.select();
+      }
       if (Input.pressed('confirm') || Input.pressed('jump')) {
-        this.who = this.selectIndex === 0 ? 'jack' : 'evee';
+        this.who = HEROES[this.selectIndex].who;
         Audio2.start(); this.inputLock = 10; this.newGame();
       }
     },
@@ -406,16 +418,17 @@
     drawTitle() {
       Sprites.drawBackground(ctx, 'overworld', this.t * 0.4, this.t);
       this.groundStrip('overworld');
-      // heroes flanking the title
       const fy = 13 * TILE;
-      Sprites.drawHero(ctx, 'jack', 96, fy, 30, 52, 1, 1 + Math.sin(this.t / 24) * 0.02, 1);
-      Sprites.drawHero(ctx, 'evee', VIEW_W - 96, fy, 30, 52, -1, 1, 1 + Math.sin(this.t / 24 + 1) * 0.02);
+      HEROES.forEach((hero, i) => {
+        Sprites.drawHero(ctx, hero.who, 48 + i * 96, fy, 26, 52, i % 2 === 0 ? 1 : -1,
+          1 + Math.sin(this.t / 24 + i * 0.5) * 0.02, 1);
+      });
       // title
       Sprites.drawTextC(ctx, 'CRYPTID', VIEW_W / 2, 54, '#1a1a2a', 5);
       Sprites.drawTextC(ctx, 'CRYPTID', VIEW_W / 2 - 1, 53, '#ffd34d', 5);
       Sprites.drawTextC(ctx, 'QUEST', VIEW_W / 2, 96, '#1a1a2a', 5);
       Sprites.drawTextC(ctx, 'QUEST', VIEW_W / 2 - 1, 95, '#ff8a3a', 5);
-      Sprites.drawTextC(ctx, 'JACK & EVEE', VIEW_W / 2, 140, '#fff2c0', 1);
+      Sprites.drawTextC(ctx, 'JACK, EVEE, CURTIS & TOBY', VIEW_W / 2, 140, '#fff2c0', 1);
       if (Math.floor(this.t / 30) % 2 === 0)
         Sprites.drawTextC(ctx, 'PRESS ENTER', VIEW_W / 2, 170, '#fff', 2);
     },
@@ -424,7 +437,7 @@
       this.groundStrip('overworld');
       Sprites.drawTextC(ctx, 'CHOOSE YOUR HERO', VIEW_W / 2, 30, '#ffffff', 2);
       const fy = 13 * TILE;
-      const slots = [{ who: 'jack', name: 'JACK', x: VIEW_W / 2 - 80 }, { who: 'evee', name: 'EVEE', x: VIEW_W / 2 + 80 }];
+      const slots = HEROES.map((hero, i) => ({ ...hero, x: 48 + i * 96 }));
       slots.forEach((s, i) => {
         const sel = i === this.selectIndex;
         // pedestal
@@ -432,8 +445,8 @@
         ctx.fillRect(s.x - 36, 60, 72, fy - 60);
         if (sel) { ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 2; ctx.strokeRect(s.x - 36, 60, 72, fy - 60); }
         const sc = sel ? 1 + Math.sin(this.t / 12) * 0.03 : 1;
-        Sprites.drawHero(ctx, s.who, s.x, fy, 36, 64, i === 0 ? 1 : -1, sc, sc);
-        Sprites.drawTextC(ctx, s.name, s.x, fy + 6, sel ? '#ffd34d' : '#cfcfe6', 2);
+        Sprites.drawHero(ctx, s.who, s.x, fy, 30, 64, i % 2 === 0 ? 1 : -1, sc, sc);
+        Sprites.drawTextC(ctx, s.name, s.x, fy + 6, sel ? '#ffd34d' : '#cfcfe6', 1);
         if (sel) Sprites.drawTextC(ctx, '\u25B2', s.x, 50, '#ffd34d', 1);
       });
       if (Math.floor(this.t / 30) % 2 === 0)

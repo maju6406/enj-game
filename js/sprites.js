@@ -67,11 +67,11 @@
   }
 
   /* ---------------- character art extraction ---------------- */
-  const heroes = { jack: null, evee: null };
+  const heroes = { jack: null, evee: null, curtis: null, toby: null };
 
   function nearWhite(d, i) { return d[i] >= 230 && d[i + 1] >= 230 && d[i + 2] >= 230; }
 
-  function processImage(img) {
+  function processImage(img, heroIds) {
     const w = img.naturalWidth, h = img.naturalHeight;
     const off = document.createElement('canvas');
     off.width = w; off.height = h;
@@ -133,18 +133,22 @@
       cc.getContext('2d').drawImage(off, x0, y0, cw, ch, 0, 0, cw, ch);
       return cc;
     }
-    heroes.jack = crop(two[0][0], two[0][1]);
-    heroes.evee = crop(two[1][0], two[1][1]);
+    heroes[heroIds[0]] = crop(two[0][0], two[0][1]);
+    heroes[heroIds[1]] = crop(two[1][0], two[1][1]);
     return true;
   }
 
   function load() {
-    return new Promise((resolve) => {
+    const loadPair = (src, heroIds) => new Promise((resolve) => {
       const img = new Image();
-      img.onload = () => { try { processImage(img); } catch (e) { console.warn('art', e); } resolve(); };
-      img.onerror = () => { console.warn('character art failed to load'); resolve(); };
-      img.src = 'assets/characters-source.png';
+      img.onload = () => { try { processImage(img, heroIds); } catch (e) { console.warn('art', e); } resolve(); };
+      img.onerror = () => { console.warn(`character art failed to load: ${src}`); resolve(); };
+      img.src = src;
     });
+    return Promise.all([
+      loadPair('assets/characters-source.png', ['jack', 'evee']),
+      loadPair('assets/curtis-toby-source.png', ['curtis', 'toby']),
+    ]);
   }
 
   function drawHero(ctx, who, cx, footY, w, h, facing, sx, sy) {
@@ -159,7 +163,8 @@
       ctx.drawImage(img, -w / 2, -h, w, h);
       ctx.imageSmoothingEnabled = prev;
     } else {
-      p(ctx, who === 'jack' ? '#15151c' : '#b06ad8', -w / 2, -h, w, h);
+      const fallback = { jack: '#15151c', evee: '#b06ad8', curtis: '#282828', toby: '#d9232e' };
+      p(ctx, fallback[who] || '#15151c', -w / 2, -h, w, h);
     }
     ctx.restore();
   }

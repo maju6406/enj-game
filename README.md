@@ -1,6 +1,6 @@
 # Cryptid Quest
 
-A web-playable 16-bit platformer inspired by classic SNES-era side-scrollers. Pick Jack or Evee, collect relics, dodge hazards, and stomp cryptids across four worlds.
+A web-playable 16-bit platformer inspired by classic SNES-era side-scrollers. Pick Jack, Evee, Curtis, or Toby, collect relics, dodge hazards, and stomp cryptids across four worlds.
 
 ## Previews
 
@@ -10,7 +10,7 @@ A web-playable 16-bit platformer inspired by classic SNES-era side-scrollers. Pi
 
 ## Features
 
-- Two playable heroes: Jack and Evee
+- Four playable heroes: Jack, Evee, Curtis, and Toby
 - Four levels modeled after a classic 1-1 through 1-4 platformer arc
 - Mythological cryptid enemies including Mothman, Chupacabra, and a Bigfoot boss
 - Three lives, relic collection, power-ups, pause support, and touch controls
@@ -30,17 +30,14 @@ On touch devices, use the on-screen left, right, jump, and pause controls.
 
 ## Customizing the kids
 
-The playable kids are generated from `assets/characters-source.png` at startup. To swap in different pictures, replace that image with a new transparent PNG that contains two separated full-body character sprites. The texture extractor automatically finds the two largest non-transparent character regions, crops the left one as `hero-jack`, and crops the right one as `hero-evee`.
+The playable kids are generated from two source images at startup:
 
-Keep the new source image transparent around the characters, leave clear empty space between the two kids, and keep both characters roughly full-body and similarly sized. If you use the legacy/static asset path too, mirror the same file to `public/assets/characters-source.png`.
+- `assets/characters-source.png`: Jack (left) and Evee (right)
+- `assets/curtis-toby-source.png`: Curtis (left) and Toby (right)
 
-To change the displayed names, edit the hard-coded labels in `src/scenes/TitleScene.js`:
+Each image should contain two separated full-body character sprites on a transparent or near-white background. The texture extractor finds the two largest character regions and crops them in left-to-right order. If you use the legacy/static asset path too, mirror both files under `public/assets/`.
 
-- Title/cast text: `JACK & EVEE`
-- Character select cards: `JACK` and `EVEE`
-- Start selection mapping: `jack` is the left card and `evee` is the right card
-
-If you rename the internal character IDs, also update `hero-jack` / `hero-evee` texture usage and the `who` values passed into `LevelScene`.
+Hero IDs, displayed names, taglines, and source-image mappings live in `src/data/constants.js`.
 
 ## Run locally
 

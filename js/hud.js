@@ -8,7 +8,8 @@
       ctx.drawImage(c, 0, 0, c.width, c.height * 0.34, X, Y, 11, 11);
       ctx.imageSmoothingEnabled = prev;
     } else {
-      ctx.fillStyle = who === 'jack' ? '#7a4a1e' : '#8a4a22';
+      const fallback = { jack: '#7a4a1e', evee: '#8a4a22', curtis: '#282828', toby: '#d9232e' };
+      ctx.fillStyle = fallback[who] || fallback.jack;
       ctx.fillRect(X, Y, 11, 11);
     }
   }

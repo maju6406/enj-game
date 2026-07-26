@@ -1,15 +1,20 @@
 import * as Phaser from 'phaser';
 import { extractHeroTextures, fallbackHeroTextures, generateTextures } from '../art/textureFactory.js';
+import { HERO_SOURCES } from '../data/constants.js';
 
 export class BootScene extends Phaser.Scene {
   constructor() { super('Boot'); }
-  preload() { this.load.image('characters-source', 'assets/characters-source.png'); }
+  preload() {
+    for (const source of HERO_SOURCES) this.load.image(source.key, source.path);
+  }
   create() {
-    try {
-      extractHeroTextures(this);
-    } catch (e) {
-      console.warn('hero texture extraction failed; using fallback sprites', e);
-      fallbackHeroTextures(this);
+    for (const source of HERO_SOURCES) {
+      try {
+        extractHeroTextures(this, source.key, source.heroIds);
+      } catch (e) {
+        console.warn(`${source.key} texture extraction failed; using fallback sprites`, e);
+        fallbackHeroTextures(this, source.heroIds);
+      }
     }
     generateTextures(this);
     const go = new URLSearchParams(location.search).get('go');

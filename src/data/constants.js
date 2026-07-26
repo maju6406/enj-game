@@ -8,9 +8,21 @@ export const HERO_DISPLAY = {
   title: 58,
   gameplay: 39,
   powered: 50,
-  select: 92,
+  select: 76,
   win: 74,
 };
+
+export const HEROES = [
+  { id: 'jack', name: 'JACK', tagline: 'BRAVE EXPLORER' },
+  { id: 'evee', name: 'EVEE', tagline: 'CRYPTID SLEUTH' },
+  { id: 'curtis', name: 'CURTIS', tagline: 'RELIC HUNTER' },
+  { id: 'toby', name: 'TOBY', tagline: 'TRAIL SCOUT' },
+];
+
+export const HERO_SOURCES = [
+  { key: 'characters-source', path: 'assets/characters-source.png', heroIds: ['jack', 'evee'] },
+  { key: 'curtis-toby-source', path: 'assets/curtis-toby-source.png', heroIds: ['curtis', 'toby'] },
+];
 
 export const SOLID = new Set(['#', 'B', '?', 'U', '[', ']', '{', '}', '=', 'X', 'D']);
 export const HAZARD = new Set(['^', 'v']);

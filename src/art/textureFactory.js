@@ -352,7 +352,13 @@ function scenery(scene) {
   add(scene, 'scenery-castle', c);
 }
 
-export function fallbackHeroTextures(scene) {
+export function fallbackHeroTextures(scene, heroIds) {
+  const palettes = {
+    jack: ['#6b3a1e', '#15151c'],
+    evee: ['#a34a28', '#b06ad8'],
+    curtis: ['#2f2118', '#282828'],
+    toby: ['#5a321b', '#d9232e'],
+  };
   const make = (key, hair, outfit) => {
     const [c, ctx] = canvas(18, 32);
     rect(ctx, 6, 3, 7, 6, hair);
@@ -364,8 +370,11 @@ export function fallbackHeroTextures(scene) {
     rect(ctx, 10, 30, 4, 2, '#d43c30');
     add(scene, key, c);
   };
-  make('hero-jack', '#6b3a1e', '#15151c');
-  make('hero-evee', '#a34a28', '#b06ad8');
+  for (const id of heroIds || Object.keys(palettes)) {
+    const palette = palettes[id];
+    if (!palette) throw new Error(`missing fallback palette for hero: ${id}`);
+    make(`hero-${id}`, ...palette);
+  }
 }
 
 export function generateTextures(scene) {
@@ -385,8 +394,9 @@ export function generateTextures(scene) {
   coin(scene); journal(scene); enemies(scene); hud(scene); scenery(scene);
 }
 
-export function extractHeroTextures(scene) {
-  const img = scene.textures.get('characters-source').getSourceImage();
+export function extractHeroTextures(scene, sourceKey, heroIds) {
+  if (heroIds.length !== 2) throw new Error('hero source must map to exactly two hero IDs');
+  const img = scene.textures.get(sourceKey).getSourceImage();
   const [work, ctx] = canvas(img.width, img.height);
   ctx.drawImage(img, 0, 0);
   const data = ctx.getImageData(0, 0, work.width, work.height);
@@ -433,6 +443,6 @@ export function extractHeroTextures(scene) {
     octx.drawImage(work, x0, y0, out.width, out.height, 0, 0, out.width, out.height);
     add(scene, key, out);
   };
-  crop(two[0], 'hero-jack');
-  crop(two[1], 'hero-evee');
+  crop(two[0], `hero-${heroIds[0]}`);
+  crop(two[1], `hero-${heroIds[1]}`);
 }

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { HERO_DISPLAY, VIEW_H, VIEW_W } from '../data/constants.js';
+import { HERO_DISPLAY, HEROES, VIEW_H, VIEW_W } from '../data/constants.js';
 import { sfx, unlockSfx } from '../systems/sfx.js';
 import { loopBob, loopPulse, loopWobble, rememberBase } from '../ui/animationUi.js';
 import { menuPanel, menuPrompt, menuText as text, pulse, tapRipple, tapZone } from '../ui/menuUi.js';
@@ -67,16 +67,16 @@ export class TitleScene extends Phaser.Scene {
     addTitleScenery(this);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23).setDepth(6);
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840).setDepth(7);
-    const jack = hero(this, 'jack', 88, VIEW_H - 40, HERO_DISPLAY.title).setDepth(12);
-    const evee = hero(this, 'evee', VIEW_W - 88, VIEW_H - 40, HERO_DISPLAY.title, true).setDepth(12);
-    loopBob(this, jack, 3, 920);
-    loopBob(this, evee, 3, 940, { delay: 180 });
-    loopWobble(this, [jack, evee], 1.5, 1180);
+    const titleHeroes = HEROES.map((entry, i) => (
+      hero(this, entry.id, 50 + i * 95, VIEW_H - 40, HERO_DISPLAY.title, i % 2 === 1).setDepth(12)
+    ));
+    titleHeroes.forEach((entry, i) => loopBob(this, entry, 3, 880 + i * 40, { delay: i * 90 }));
+    loopWobble(this, titleHeroes, 1.5, 1180);
     const logo = [
       text(this, 'CRYPTID', VIEW_W / 2, 58, 34, '#ffd34d').setDepth(20),
       text(this, 'QUEST', VIEW_W / 2, 98, 34, '#ff8a3a').setDepth(20),
     ];
-    text(this, 'JACK & EVEE', VIEW_W / 2, 139, 11, '#fff2c0').setDepth(20);
+    text(this, 'JACK, EVEE, CURTIS & TOBY', VIEW_W / 2, 139, 7, '#fff2c0').setDepth(20);
     if (isTouchDevice()) {
       text(this, 'USE LEFT / RIGHT / JUMP BUTTONS', VIEW_W / 2, 158, 6, '#fff2c0').setDepth(20);
     }
@@ -124,19 +124,18 @@ export class CastScene extends Phaser.Scene {
     this.add.rectangle(VIEW_W / 2, VIEW_H - 40, VIEW_W, 12, 0x58a840);
 
     text(this, 'THE CAST', VIEW_W / 2, 25, 20, '#ffd34d');
-    text(this, 'JACK & EVEE', VIEW_W / 2, 51, 10, '#fff2c0');
+    text(this, 'FOUR HEROES, ONE QUEST', VIEW_W / 2, 51, 8, '#fff2c0');
 
-    menuPanel(this, 119, 124, 112, 136, { stroke: 0xffffff });
-    menuPanel(this, 265, 124, 112, 136, { stroke: 0xffffff });
-    const jack = hero(this, 'jack', 119, 156, 92);
-    const evee = hero(this, 'evee', 265, 156, 92);
-    text(this, 'JACK', 119, 183, 11);
-    text(this, 'EVEE', 265, 183, 11);
-    text(this, 'BRAVE EXPLORER', 119, 199, 6, '#fff2c0');
-    text(this, 'CRYPTID SLEUTH', 265, 199, 6, '#fff2c0');
-    pulse(this, [jack, evee], 1.03, 720);
-    loopWobble(this, jack, 1.2, 920);
-    loopWobble(this, evee, -1.2, 880);
+    const castX = [50, 145, 239, 334];
+    const castHeroes = HEROES.map((entry, i) => {
+      menuPanel(this, castX[i], 124, 82, 136, { stroke: 0xffffff });
+      const portrait = hero(this, entry.id, castX[i], 156, 78);
+      text(this, entry.name, castX[i], 183, entry.name.length > 5 ? 8 : 9);
+      text(this, entry.tagline, castX[i], 199, 4, '#fff2c0');
+      loopWobble(this, portrait, i % 2 === 0 ? 1.2 : -1.2, 860 + i * 30);
+      return portrait;
+    });
+    pulse(this, castHeroes, 1.03, 720);
 
     const castPrompt = isTouchDevice()
       ? (this.isAttract ? 'TAP TO PLAY' : 'TAP TO CHOOSE')
@@ -260,45 +259,42 @@ export class SelectScene extends Phaser.Scene {
     this.pick = 0;
     this.cameras.main.setBackgroundColor('#1c244a');
     text(this, 'CHOOSE YOUR HERO', VIEW_W / 2, 24, 17, '#ffe060');
-    this.cards = [
-      menuPanel(this, 112, 119, 122, 142, { stroke: 0xffffff }),
-      menuPanel(this, 272, 119, 122, 142, { stroke: 0x505060 }),
-    ];
-    this.heroSprites = [
-      hero(this, 'jack', 112, 143, HERO_DISPLAY.select),
-      hero(this, 'evee', 272, 143, HERO_DISPLAY.select),
-    ];
+    const cardX = [50, 145, 239, 334];
+    this.cards = HEROES.map((_, i) => (
+      menuPanel(this, cardX[i], 119, 82, 142, { stroke: i === 0 ? 0xffffff : 0x505060 })
+    ));
+    this.heroSprites = HEROES.map((entry, i) => (
+      hero(this, entry.id, cardX[i], 143, HERO_DISPLAY.select)
+    ));
     this.heroSprites.forEach((entry, i) => {
       rememberBase(entry);
-      loopBob(this, entry, i === 0 ? 2 : 3, i === 0 ? 720 : 680, { delay: i * 120 });
-      loopWobble(this, entry, i === 0 ? 1.2 : -1.2, i === 0 ? 840 : 780);
+      loopBob(this, entry, i % 2 === 0 ? 2 : 3, 680 + i * 30, { delay: i * 120 });
+      loopWobble(this, entry, i % 2 === 0 ? 1.2 : -1.2, 780 + i * 30);
     });
-    text(this, 'JACK', 112, 171, 13, '#ffffff');
-    text(this, 'EVEE', 272, 171, 13, '#ffffff');
-    text(this, 'BRAVE EXPLORER', 112, 190, 6, '#fff2c0');
-    text(this, 'CRYPTID SLEUTH', 272, 190, 6, '#fff2c0');
+    HEROES.forEach((entry, i) => {
+      text(this, entry.name, cardX[i], 171, entry.name.length > 5 ? 8 : 9, '#ffffff');
+      text(this, entry.tagline, cardX[i], 190, 4, '#fff2c0');
+    });
     menuPrompt(this, isTouchDevice() ? 'TAP A HERO' : 'TAP HERO OR ENTER', VIEW_W / 2, 216, 9);
-    this.input.keyboard.on('keydown-LEFT', () => this.setPick(0));
-    this.input.keyboard.on('keydown-RIGHT', () => this.setPick(1));
+    this.input.keyboard.on('keydown-LEFT', () => this.setPick((this.pick - 1 + HEROES.length) % HEROES.length));
+    this.input.keyboard.on('keydown-RIGHT', () => this.setPick((this.pick + 1) % HEROES.length));
     this.input.keyboard.on('keydown-ENTER', () => this.start());
     this.input.keyboard.on('keydown-SPACE', () => this.start());
-    this.cards[0]
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', (pointer) => this.tapHero(0, pointer));
-    this.cards[1]
-      .setInteractive({ useHandCursor: true })
-      .on('pointerup', (pointer) => this.tapHero(1, pointer));
+    this.cards.forEach((card, i) => {
+      card
+        .setInteractive({ useHandCursor: true })
+        .on('pointerup', (pointer) => this.tapHero(i, pointer));
+    });
     this.setPick(0, true);
   }
   setPick(i, silent = false) {
     if (this.pick !== i && !silent) sfx('select');
     this.pick = i;
-    this.cards[0].setStrokeStyle(2, i === 0 ? 0xffffff : 0x505060);
-    this.cards[1].setStrokeStyle(2, i === 1 ? 0xffffff : 0x505060);
-    this.cards[0].setScale(i === 0 ? 1.04 : 1);
-    this.cards[1].setScale(i === 1 ? 1.04 : 1);
-    this.heroSprites[0].setTint(i === 0 ? 0xffffff : 0xb9b9d6);
-    this.heroSprites[1].setTint(i === 1 ? 0xffffff : 0xb9b9d6);
+    this.cards.forEach((card, index) => {
+      card.setStrokeStyle(2, i === index ? 0xffffff : 0x505060);
+      card.setScale(i === index ? 1.04 : 1);
+    });
+    this.heroSprites.forEach((entry, index) => entry.setTint(i === index ? 0xffffff : 0xb9b9d6));
   }
   tapHero(i, pointer) {
     tapRipple(this, pointer.worldX, pointer.worldY);
@@ -310,7 +306,7 @@ export class SelectScene extends Phaser.Scene {
     this.started = true;
     unlockSfx();
     sfx('power');
-    this.scene.start('Level', { who: this.pick === 0 ? 'jack' : 'evee', levelIndex: 0, lives: 3, relics: 0, score: 0 });
+    this.scene.start('Level', { who: HEROES[this.pick].id, levelIndex: 0, lives: 3, relics: 0, score: 0 });
   }
 }
 
@@ -334,8 +330,11 @@ export class WinScene extends Phaser.Scene {
   create(data) {
     this.cameras.main.setBackgroundColor('#5c94fc');
     this.add.rectangle(VIEW_W / 2, VIEW_H - 18, VIEW_W, 36, 0x6b4a23);
-    const winner = hero(this, data.who || 'jack', 154, VIEW_H - 40, HERO_DISPLAY.win);
-    const pal = hero(this, data.who === 'evee' ? 'jack' : 'evee', 230, VIEW_H - 40, HERO_DISPLAY.win, true);
+    const winnerId = data.who || HEROES[0].id;
+    const winnerIndex = Math.max(0, HEROES.findIndex((entry) => entry.id === winnerId));
+    const palId = HEROES[(winnerIndex + 1) % HEROES.length].id;
+    const winner = hero(this, winnerId, 154, VIEW_H - 40, HERO_DISPLAY.win);
+    const pal = hero(this, palId, 230, VIEW_H - 40, HERO_DISPLAY.win, true);
     loopBob(this, winner, 4, 520);
     loopBob(this, pal, 3, 620, { delay: 140 });
     loopWobble(this, [winner, pal], 2, 700);

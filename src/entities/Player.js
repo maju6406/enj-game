@@ -17,9 +17,13 @@ export class Player {
     this.sprite.body.setMaxVelocity(PHYSICS.maxRun, 620);
     this.wasGrounded = true;
     this.visualPhase = Phaser.Math.FloatBetween(0, Math.PI * 2);
+    this.visualStride = this.visualPhase;
     this.squashStart = 0;
     this.squashDuration = 0;
     this.squashAmount = 0;
+    this.jumpBufferUntil = 0;
+    this.coyoteUntil = 0;
+    this.jumpWasHeld = false;
   }
 
   aspect() {
@@ -32,6 +36,9 @@ export class Player {
     this.sprite.setDisplaySize(Math.round(height * this.aspect()), height);
     this.sprite.setData('__baseScaleX', Math.abs(this.sprite.scaleX));
     this.sprite.setData('__baseScaleY', Math.abs(this.sprite.scaleY));
+    this.visualScaleX = Math.abs(this.sprite.scaleX);
+    this.visualScaleY = Math.abs(this.sprite.scaleY);
+    this.visualAngle = 0;
     rememberBase(this.sprite);
   }
 
@@ -66,35 +73,41 @@ export class Player {
     return true;
   }
 
-  update(cursors, keys, touch = {}) {
+  update(cursors, keys, touch = {}, delta = 1000 / 60) {
     const body = this.sprite.body;
     const left = cursors.left.isDown || touch.left;
     const right = cursors.right.isDown || touch.right;
+    const direction = Number(right) - Number(left);
+    const jumpHeld = cursors.up.isDown || keys.space.isDown || !!touch.jump;
     const touchJumpPressed = touch.jump && !this.touchJumpWasDown;
     const jumpPressed = Phaser.Input.Keyboard.JustDown(cursors.up) || Phaser.Input.Keyboard.JustDown(keys.space) || touchJumpPressed;
     this.touchJumpWasDown = touch.jump;
 
-    body.setAccelerationX(0);
-    if (left) {
-      body.setVelocityX(-PHYSICS.maxRun);
-      this.sprite.setFlipX(true);
-    } else if (right) {
-      body.setVelocityX(PHYSICS.maxRun);
-      this.sprite.setFlipX(false);
-    } else {
-      body.setVelocityX(0);
-    }
-
     const grounded = body.blocked.down || body.touching.down;
-    if (jumpPressed && grounded) {
+    if (grounded) this.coyoteUntil = this.scene.time.now + PHYSICS.coyoteTimeMs;
+    if (jumpPressed) this.jumpBufferUntil = this.scene.time.now + PHYSICS.jumpBufferMs;
+
+    const acceleration = grounded ? PHYSICS.groundAcceleration : PHYSICS.airAcceleration;
+    body.setAccelerationX(direction * acceleration);
+    body.setDragX(grounded ? PHYSICS.groundDrag : PHYSICS.airDrag);
+    if (direction < 0) this.sprite.setFlipX(true);
+    else if (direction > 0) this.sprite.setFlipX(false);
+
+    if (this.scene.time.now <= this.jumpBufferUntil && this.scene.time.now <= this.coyoteUntil) {
       body.setVelocityY(PHYSICS.jumpVelocity);
-      this.triggerSquash(0.08, 120);
+      this.jumpBufferUntil = 0;
+      this.coyoteUntil = 0;
+      this.triggerSquash(0.05, 150);
       sfx('jump');
     }
+    if (!jumpHeld && this.jumpWasHeld && body.velocity.y < 0) {
+      body.setVelocityY(body.velocity.y * PHYSICS.jumpCutMultiplier);
+    }
+    this.jumpWasHeld = jumpHeld;
 
     this.sprite.setAlpha(this.scene.time.now < this.invulnUntil && Math.floor(this.scene.time.now / 80) % 2 === 0 ? 0.35 : 1);
-    this.animateVisual(body, grounded, left || right);
-    if (grounded && !this.wasGrounded) this.triggerSquash(0.12, 110);
+    this.animateVisual(body, grounded && body.velocity.y >= 0, delta);
+    if (grounded && !this.wasGrounded) this.triggerSquash(0.07, 160);
     this.wasGrounded = grounded;
     if (this.sprite.y > VIEW_H + 64) this.scene.killPlayer('fall');
   }
@@ -102,39 +115,44 @@ export class Player {
   bounce() { this.sprite.setVelocityY(PHYSICS.stompBounce); }
   get foot() { return this.sprite.y; }
 
-  animateVisual(body, grounded, moving) {
+  animateVisual(body, grounded, delta) {
     const baseScaleX = this.sprite.getData('__baseScaleX') || Math.abs(this.sprite.scaleX);
     const baseScaleY = this.sprite.getData('__baseScaleY') || Math.abs(this.sprite.scaleY);
-    this.sprite.setData('__baseScaleX', baseScaleX);
-    this.sprite.setData('__baseScaleY', baseScaleY);
     const time = this.scene.time.now;
-    let scaleX = baseScaleX;
-    let scaleY = baseScaleY;
-    let angle = 0;
+    const speedRatio = Phaser.Math.Clamp(Math.abs(body.velocity.x) / PHYSICS.maxRun, 0, 1);
+    const smoothing = 1 - Math.exp(-delta / 55);
+    let targetScaleX = baseScaleX;
+    let targetScaleY = baseScaleY;
+    let targetAngle = 0;
 
     if (!grounded) {
-      scaleX *= 0.96;
-      scaleY *= 1.04;
-      angle = body.velocity.y < 0 ? (this.sprite.flipX ? -2 : 2) : (this.sprite.flipX ? 3 : -3);
-    } else if (moving) {
-      const stride = Math.sin(time / 70 + this.visualPhase);
-      scaleX *= 1 + Math.abs(stride) * 0.035;
-      scaleY *= 1 - Math.abs(stride) * 0.025;
-      angle = (this.sprite.flipX ? -1 : 1) * stride * 1.8;
+      targetScaleX *= 0.985;
+      targetScaleY *= 1.015;
+      targetAngle = body.velocity.y < 0 ? (this.sprite.flipX ? -1.2 : 1.2) : (this.sprite.flipX ? 1.6 : -1.6);
+    } else if (speedRatio > 0.05) {
+      this.visualStride += delta * 0.014 * speedRatio;
+      const stride = Math.sin(this.visualStride);
+      targetScaleX *= 1 + Math.abs(stride) * 0.008 * speedRatio;
+      targetScaleY *= 1 - Math.abs(stride) * 0.006 * speedRatio;
+      targetAngle = (this.sprite.flipX ? -1 : 1) * stride * 0.7 * speedRatio;
     } else {
       const idle = Math.sin(time / 430 + this.visualPhase);
-      scaleY *= 1 + idle * 0.012;
+      targetScaleY *= 1 + idle * 0.004;
     }
 
     if (this.squashDuration > 0) {
       const t = Phaser.Math.Clamp((time - this.squashStart) / this.squashDuration, 0, 1);
-      const strength = (1 - t) * this.squashAmount;
-      scaleX *= 1 + strength;
-      scaleY *= 1 - strength;
+      const strength = Math.sin(Math.PI * t) * this.squashAmount;
+      targetScaleX *= 1 + strength;
+      targetScaleY *= 1 - strength;
+      if (t >= 1) this.squashDuration = 0;
     }
 
-    this.sprite.setScale(scaleX, scaleY);
-    this.sprite.setAngle(angle);
+    this.visualScaleX = Phaser.Math.Linear(this.visualScaleX, targetScaleX, smoothing);
+    this.visualScaleY = Phaser.Math.Linear(this.visualScaleY, targetScaleY, smoothing);
+    this.visualAngle = Phaser.Math.Linear(this.visualAngle, targetAngle, smoothing);
+    this.sprite.setScale(this.visualScaleX, this.visualScaleY);
+    this.sprite.setAngle(this.visualAngle);
   }
 
   triggerSquash(amount, duration) {

@@ -1,5 +1,5 @@
 import * as Phaser from 'phaser';
-import { GAMEPLAY_ZOOM, HAZARD, HERO_DISPLAY, PHYSICS, SCORE, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
+import { CAMERA, GAMEPLAY_ZOOM, HAZARD, HERO_DISPLAY, PHYSICS, SCORE, SOLID, START_LIVES, TILE, VIEW_H, VIEW_W } from '../data/constants.js';
 import { LEVELS } from '../data/levels.js';
 import { Player } from '../entities/Player.js';
 import { spawnEnemy, stompEnemy, updateEnemy } from '../entities/enemies.js';
@@ -70,7 +70,8 @@ export class LevelScene extends Phaser.Scene {
       this.player.invulnUntil = this.time.now + 1800;
       this.addSparkle(spawn.x, spawn.y - HERO_DISPLAY.gameplay / 2, 0xfff2c0);
     }
-    this.cameras.main.startFollow(this.player.sprite, true, 1, 1);
+    this.cameras.main.startFollow(this.player.sprite, true, CAMERA.followLerpX, CAMERA.followLerpY);
+    this.cameras.main.setDeadzone(CAMERA.deadzoneWidth, CAMERA.deadzoneHeight);
     this.cameras.main.setBounds(0, 0, this.level.width * TILE, VIEW_H);
 
     this.cursors = this.input.keyboard.createCursorKeys();
@@ -1074,14 +1075,14 @@ export class LevelScene extends Phaser.Scene {
     this.pauseOverlay = null;
   }
 
-  update(time) {
+  update(time, delta) {
     if (!this.player || this.dying || this.clearing || this.pausedByOverlay) return;
     if (this.demo && time - (this.demoStartedAt || 0) > 28000) {
       this.endDemo();
       return;
     }
     const touch = this.demo ? this.demoInput(time) : this.touch;
-    this.player.update(this.cursors, this.keys, touch);
+    this.player.update(this.cursors, this.keys, touch, delta);
     if (this.level.flagX != null && this.player.sprite.body.right >= this.level.flagX * TILE + 8) {
       this.levelClear();
       return;
